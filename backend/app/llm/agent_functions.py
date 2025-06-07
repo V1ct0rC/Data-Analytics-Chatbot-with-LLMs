@@ -1,11 +1,21 @@
+import json
 import os
 import pandas as pd
 from dotenv import load_dotenv
+
 from sqlalchemy import create_engine, text, exc
+from decimal import Decimal
 
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///clientes.db")
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 
 query_database_declaration = {
@@ -45,7 +55,16 @@ def query_database(sql_query: str):
 
             print(rows)
             print(columns)
-            return [dict(zip(columns, row)) for row in rows]
+            result_dicts = []
+            for row in rows:
+                row_dict = dict(zip(columns, row))
+                # Convert any Decimal objects to float
+                for key, value in row_dict.items():
+                    if isinstance(value, Decimal):
+                        row_dict[key] = float(value)
+                result_dicts.append(row_dict)
+            return result_dicts
+        
     except exc.SQLAlchemyError as e:
         print(f"Database query error: {e}")
         return None

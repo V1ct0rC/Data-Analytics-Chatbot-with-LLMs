@@ -23,6 +23,11 @@ def create_session(request: ChatSessionRequest):
     print(f"Created new session: {new_session.id}")
     return new_session
 
+@app.get("/sessions", response_model=List[ChatSession])
+def list_sessions():
+    """Get all chat sessions"""
+    return list(session_manager.chat_sessions.values())
+
 @app.get("/sessions/{session_id}", response_model=ChatSession)
 def get_session(session_id: str):
     """Get a chat session by ID"""
