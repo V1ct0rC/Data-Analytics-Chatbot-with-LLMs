@@ -4,36 +4,58 @@ This repository contains implementations for a data analytics chatbot with LLMs.
 ![Landing Page](frontend/assets/landing_page_print.png)
 
 ---
-To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal:
+To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
 
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+For your env file, you need to add the following environment variables:
 ```plaintext
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-Incase you have a cloud database, you can also add the following environment variables to the `.env` file:
+Incase you already have a cloud database instantiated, you can add the following environment variable directply to the `.env` file:
 
 ```plaintext
 DATABASE_URL=your_database_url
-
-> depending on your database type, you may also need to set the following variables:
-DATABASE_USER=your_database_user
-DATABASE_PASSWORD=your_database_password
-DATABASE_NAME=your_database_name
-DATABASE_HOST=your_database_host
-DATABASE_PORT=your_database_port
 ```
 
-Without a cloud database, the code will automatically use a local SQLite database.
+If you want to create a new AWS RDS cloud database, you need add you credencials to the `.env` file:
+
+```plaintext
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+AWS_REGION_NAME=your_aws_region
+
+DB_NAME=your_database_name
+DB_INSTANCE_IDENTIFIER=your_database_instance_identifier
+DB_USERNAME=your_database_master_username
+DB_PASSWORD=your_database_master_password
+```
+
+Create a new database by running the following command in the terminal:
+
+```bash
+python run.py --create
+```
+A new AWS RDS database will be created, and the `DATABASE_URL` will be automatically updated in the `.env` file.
+
+Without a cloud database or AWS credencials, the code will automatically use a local SQLite database.
 
 ---
+With all set, you can run the application via:
 ```bash
-cd .\backend\app\
-uvicorn main:app --reload
+python run.py
 ```
 
-```bash
-streamlit run .\frontend\app.py
-```
+---
+Biggest difficulties:
+- Organizing the code in a way that is easy to understand and maintain.
+- Ensuring that the chatbot can call the right functions with the right parameters based on the user's query.
+- By far, the most challenging part was to create the possibility of creating a new cloud database from scratch without much prior knowledge about AWS.
 
 ---
 Future improvements:
