@@ -28,7 +28,7 @@ def start_chatting():
     """Callback to hide the landing page and show the chat interface."""
     st.session_state.show_landing_page = False
 
-# Display landing page
+# Display landing page -------------------------------------------------------------------------------------
 if st.session_state.show_landing_page:
     st.title("Welcome to the Data Analysis Chatbot")
     
@@ -137,28 +137,17 @@ else:
         chat_col, viz_col = st.columns([2, 1])
 
         with chat_col:
-            chat_container = st.container(height=800)
-            st.markdown("<div style='margin-bottom: 100px;'></div>", unsafe_allow_html=True)  # Spacer
-            input_container = st.container()
-
             # Get and display current chat messages ----------------------------------------------------------------
             current_messages = st.session_state.chat_sessions[st.session_state.current_chat_id]
 
+            chat_container = st.container(height=500)
             with chat_container:
-                st.markdown("""
-                <style>
-                [data-testid="stVerticalBlock"] {
-                    max-height: 800px;
-                    overflow-y: auto;
-                }
-                </style>
-                """, unsafe_allow_html=True)
-
                 for message in current_messages:
                     with st.chat_message(message["role"]):
                         st.markdown(message["content"])
 
             # Input field for user messages ------------------------------------------------------------------------
+            input_container = st.container()
             with input_container:
                 if "submit_pressed" not in st.session_state:
                     st.session_state.submit_pressed = False
@@ -226,38 +215,39 @@ else:
                         st.rerun()
         
         with viz_col:
-            st.subheader("Visualizations")
-            
-            current_session_id = st.session_state.current_chat_id
-            session_charts = st.session_state.chart_history.get(current_session_id, [])
-            
-            if not session_charts:
-                st.info("No visualizations yet. Ask for a chart to see visualizations here.")
-            else:
-                for i, chart_data in enumerate(session_charts):
-                    if chart_data["success"]:
-                        with st.container():
-                            st.markdown(f"### {chart_data['title']}")
-                            
-                            import pandas as pd
-                            df = pd.DataFrame(chart_data["data"])
-                            
-                            if chart_data["chart_type"] == "bar":
-                                st.bar_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
-                                    
-                            elif chart_data["chart_type"] == "line":
-                                st.line_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
+            st.text("Visualizations")
+            viz_container = st.container(height=631)
+            with viz_container:
+                current_session_id = st.session_state.current_chat_id
+                session_charts = st.session_state.chart_history.get(current_session_id, [])
+                
+                if not session_charts:
+                    st.info("No visualizations yet. Ask for a chart to see visualizations here.")
+                else:
+                    for i, chart_data in enumerate(session_charts):
+                        if chart_data["success"]:
+                            with st.container():
+                                st.markdown(f"### {chart_data['title']}")
                                 
-                            elif chart_data["chart_type"] == "scatter":
-                                st.scatter_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
-                        
-                            if i < len(session_charts) - 1:
-                                st.divider()
+                                import pandas as pd
+                                df = pd.DataFrame(chart_data["data"])
+                                
+                                if chart_data["chart_type"] == "bar":
+                                    st.bar_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
+                                        
+                                elif chart_data["chart_type"] == "line":
+                                    st.line_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
+                                    
+                                elif chart_data["chart_type"] == "scatter":
+                                    st.scatter_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
                             
-                            st.download_button(
-                                f"Download data",
-                                df.to_csv(index=False).encode('utf-8'),
-                                f"{chart_data['title'].lower().replace(' ', '_')}.csv",
-                                "text/csv",
-                                key=f"download_{i}"
-                            )
+                                if i < len(session_charts) - 1:
+                                    st.divider()
+                                
+                                st.download_button(
+                                    f"Download data",
+                                    df.to_csv(index=False).encode('utf-8'),
+                                    f"{chart_data['title'].lower().replace(' ', '_')}.csv",
+                                    "text/csv",
+                                    key=f"download_{i}"
+                                )
