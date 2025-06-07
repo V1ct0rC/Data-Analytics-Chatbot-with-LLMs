@@ -3,6 +3,12 @@ This repository contains implementations for a data analytics chatbot with LLMs.
 
 ![Landing Page](frontend/assets/landing_page_print.png)
 
+This repo is divided into three main parts: the frontend, the backend and the cloud. The frontend is responsible for the user interface, while the backend handles the logic of processing user queries, interacting with the database, and generating responses. The cloud part is responsible for creatng the infrascructure and hosting the database and making it accessible to the backend.
+
+For the frontend, I used [Streamlit](https://streamlit.io/), a powerful framework for building data applications. The backend is built with Python (FastAPI), using libraries such as [SQLAlchemy](https://www.sqlalchemy.org/) for database interactions. The cloud part is implemented using [AWS RDS](https://aws.amazon.com/rds/) for hosting the database, and [Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) for interacting with AWS services.
+
+The LLM model used in this project is [Google Gemini](https://ai.google.dev/gemini), which is a powerful language model that can understand and generate natural language text. The model is used to interpret user queries, translate them into SQL queries, and generate responses based on the results of the queries. Gemini was chosen because it seamlessly integrates with Python functions and have a robust API for interacting with the backend.
+
 ---
 To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
 
@@ -55,7 +61,7 @@ python run.py
 Biggest difficulties:
 - Organizing the code in a way that is easy to understand and maintain.
 - Ensuring that the chatbot can call the right functions with the right parameters based on the user's query.
-- By far, the most challenging part was to create the possibility of creating a new cloud database from scratch without much prior knowledge about AWS.
+- By far, the most challenging part was running all the code together from a single entry point, as the code is divided into multiple files and modules. I had to ensure that all the imports and dependencies were correctly set up, and that the code could be executed in a single run without any issues.
 
 ---
 Future improvements:
@@ -64,3 +70,4 @@ Future improvements:
 - Some details like chat naming and user profile are not implemented.
 - The interface look well using streamlit, but it would be great to have a more polished and customizable UI.
 - A stronger error handling and validation in backend. I did not go deep into documentation of the libraries used, so there may be some edge cases that are not handled the best way.
+- Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.
