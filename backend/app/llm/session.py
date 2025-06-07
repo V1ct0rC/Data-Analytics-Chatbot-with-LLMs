@@ -4,7 +4,7 @@ functions to create, retrieve, delete chat sessions and deal with chat messages.
 """
 
 from datetime import datetime
-from db.models import ChatSession, ChatMessage
+from backend.app.db.models import ChatSession, ChatMessage
 from typing import Dict, List, Optional
 from sqlalchemy import create_engine, text
 import uuid
@@ -41,7 +41,7 @@ def create_session(name: Optional[str] = None) -> Optional[ChatSession]:
     
     except SQLAlchemyError as e:
         logger.error(f"Error creating session: {e}")
-        return None
+        raise ValueError(f"Failed to create session: {e}")
 
 
 def get_session(session_id: str) -> Optional[ChatSession]:
@@ -98,6 +98,8 @@ def list_sessions() -> List[ChatSession]:
             result = conn.execute(
                 text("SELECT id, name, created_at FROM chat_sessions")
             ).fetchall()
+
+            print(f"Found {len(result)} sessions in the database.")
             sessions = []
             for row in result:
                 messages = get_messages(row[0])
@@ -133,12 +135,7 @@ def add_message(session_id: str, role: str, content: str) -> Optional[ChatMessag
 
 
 def get_messages(session_id: str) -> List[ChatMessage]:
-    """Get all messages in a chat session"""
-    
-    if not get_session(session_id):
-        logger.warning(f"Session with ID {session_id} does not exist.")
-        return []
-    
+    """Get all messages in a chat session"""    
     try:
         with engine.connect() as conn:
             result = conn.execute(

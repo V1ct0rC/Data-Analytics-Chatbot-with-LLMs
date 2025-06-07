@@ -12,12 +12,12 @@ from typing import List
 from google import genai
 from google.genai import types
 
-from llm.agent_functions import query_database, generate_chart, list_tables
-from llm.prompt_template import GEMINI_PROMPT_TEMPLATE
-import llm.session as session_manager
+from backend.app.llm.agent_functions import query_database, generate_chart, list_tables
+from backend.app.llm.prompt_template import GEMINI_PROMPT_TEMPLATE
+import backend.app.llm.session as session_manager
 
-from db.models import ChatSession, ChatMessage, ChatSessionRequest, GeminiRequest
-from db.db_functions import add_csv_to_database
+from backend.app.db.models import ChatSession, ChatMessage, ChatSessionRequest, GeminiRequest
+from backend.app.db.db_functions import add_csv_to_database
 from dotenv import load_dotenv
 
 

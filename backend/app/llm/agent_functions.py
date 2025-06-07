@@ -8,7 +8,6 @@ This approach allows the agent to attempt to handle errors and provide feedback 
 
 import json
 import os
-import pandas as pd
 from dotenv import load_dotenv
 
 from sqlalchemy import create_engine, text, exc
@@ -17,7 +16,6 @@ from decimal import Decimal
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
-
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -51,35 +49,45 @@ def query_database(sql_query: str) -> list:
     Returns:
         A list of dictionaries representing [columns, rows] from the query result, or a dictionary with an error message if the query fails.
     """
+    if not sql_query or not isinstance(sql_query, str):
+        return [{"error": "No SQL query provided."}]
     print(f"Executing SQL query: {sql_query}")
-    engine = create_engine(DATABASE_URL)
     
     try:
-        # Ensure the SQL query is safe to execute. Errors will be returned to the agent.
-        with engine.connect() as conn:
-            result = conn.execute(text(sql_query))
+        engine = create_engine(DATABASE_URL)
 
-            rows = result.fetchall()
-            columns = result.keys()
+        try:
+            # Ensure the SQL query is safe to execute. Errors will be returned to the agent.
+            with engine.connect() as conn:
+                result = conn.execute(text(sql_query))
 
-            result_dicts = []
-            for row in rows:
-                row_dict = dict(zip(columns, row))
+                rows = result.fetchall()
+                columns = result.keys()
 
-                # Convert any Decimal objects to float so they can be serialized to JSON
-                for key, value in row_dict.items():
-                    if isinstance(value, Decimal):
-                        row_dict[key] = float(value)
-                result_dicts.append(row_dict)
-            return result_dicts
-        
+                result_dicts = []
+                for row in rows:
+                    row_dict = dict(zip(columns, row))
+
+                    # Convert any Decimal objects to float so they can be serialized to JSON
+                    for key, value in row_dict.items():
+                        if isinstance(value, Decimal):
+                            row_dict[key] = float(value)
+                    result_dicts.append(row_dict)
+                return result_dicts
+            
+        except exc.SQLAlchemyError as e:
+            print(f"Database query error: {e}")
+            return [{"error": str(e)}]
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            return [{"error": str(e)}]
+    
     except exc.SQLAlchemyError as e:
-        print(f"Database query error: {e}")
-        return [{"error": str(e)}]
-
+        print(f"Database connection error: {e}")
+        return [{"error": f"Database connection error: {str(e)}"}]
     except Exception as e:
-        print(f"Unexpected error: {e}")
-        return [{"error": str(e)}]
+        print(f"Unexpected error during DB connection: {e}")
+        return [{"error": f"Unexpected error during DB connection: {str(e)}"}]
 
 
 generate_chart_declaration = {

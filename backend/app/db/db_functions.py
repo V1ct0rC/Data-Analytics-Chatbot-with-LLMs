@@ -3,8 +3,10 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from io import StringIO
+from dotenv import load_dotenv
 
 
+load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
 
 def add_csv_to_database(table_name, file_bytes):
@@ -46,4 +48,7 @@ def add_csv_to_database(table_name, file_bytes):
 
     except Exception as e:
         return {"success": False, "message": str(e)}
-    
+
+
+if __name__ == "__main__":
+    pass
