@@ -76,8 +76,8 @@ def initialize_session_state():
         st.session_state.sessions_loaded = True
         
         # If sessions were loaded and this is first run, skip landing page
-        if sessions_loaded and st.session_state.chat_sessions:
-            st.session_state.show_landing_page = False
+        # if sessions_loaded and st.session_state.chat_sessions:
+        #     st.session_state.show_landing_page = False
 
 def start_chatting():
     """Callback to hide the landing page and show the chat interface."""
@@ -96,7 +96,8 @@ def render_landing_page():
         This chatbot helps you analyze and understand your data through natural conversations.
         
         **Features:**
-        - Ask questions about your data in plain English
+        - Upload your CSV data files directly
+        - Ask questions about your data in natural language
         - Get visualizations and insights automatically
         - Multiple chat sessions to organize your work
         - Save and export your analysis results
