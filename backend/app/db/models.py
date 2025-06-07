@@ -5,6 +5,9 @@ from datetime import datetime
 
 class GeminiRequest(BaseModel):
     prompt: str
+    temperature: float
+    top_p: float
+    top_k: int
     session_id: Optional[str] = None
 
 class ChatMessage(BaseModel):

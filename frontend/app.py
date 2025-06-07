@@ -4,6 +4,8 @@ import uuid
 import os
 import pandas as pd
 
+from modules.api import load_sessions, load_messages, create_session, send_message
+
 
 st.set_page_config(page_title="Data Analysis Chatbot", layout="wide")
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
@@ -48,43 +50,45 @@ def load_sessions_from_backend():
         st.error(f"Error loading sessions: {str(e)}")
         return False
 
-# Initialize session states
-if "chat_sessions" not in st.session_state:
-    st.session_state.chat_sessions = {}
-    st.session_state.session_names = {}
+def initialize_session_state():
+    """Initialize session state variables."""
 
-if "current_chat_id" not in st.session_state:
-    st.session_state.current_chat_id = None
+    if "chat_sessions" not in st.session_state:
+        st.session_state.chat_sessions = {}
+        st.session_state.session_names = {}
 
-if "show_landing_page" not in st.session_state:
-    st.session_state.show_landing_page = True
+    if "current_chat_id" not in st.session_state:
+        st.session_state.current_chat_id = None
 
-if "current_chart_data" not in st.session_state:
-    st.session_state.current_chart_data = None
+    if "show_landing_page" not in st.session_state:
+        st.session_state.show_landing_page = True
 
-if "chart_history" not in st.session_state:
-    st.session_state.chart_history = {}
+    if "current_chart_data" not in st.session_state:
+        st.session_state.current_chart_data = None
 
-# Load existing sessions from backend
-if "sessions_loaded" not in st.session_state:
-    sessions_loaded = load_sessions_from_backend()
-    st.session_state.sessions_loaded = True
-    
-    # If sessions were loaded and this is first run, skip landing page
-    if sessions_loaded and st.session_state.chat_sessions:
-        st.session_state.show_landing_page = False
+    if "chart_history" not in st.session_state:
+        st.session_state.chart_history = {}
+
+    # Load existing sessions from backend
+    if "sessions_loaded" not in st.session_state:
+        sessions_loaded = load_sessions_from_backend()
+        st.session_state.sessions_loaded = True
+        
+        # If sessions were loaded and this is first run, skip landing page
+        if sessions_loaded and st.session_state.chat_sessions:
+            st.session_state.show_landing_page = False
 
 def start_chatting():
     """Callback to hide the landing page and show the chat interface."""
+
     st.session_state.show_landing_page = False
 
-# Display landing page -------------------------------------------------------------------------------------
-if st.session_state.show_landing_page:
-    st.title("Welcome to the Data Analysis Chatbot")
-    
-    col1, col2 = st.columns([1, 1])
-    
+def render_landing_page():
+    """Render the landing page with a welcome message and instructions."""
+
+    col1, col2 = st.columns([1, 2])
     with col1:
+        st.title("Welcome to the Data Analysis Chatbot")
         st.markdown("""
         ### Your AI Assistant for Data Analysis
         
@@ -105,11 +109,11 @@ if st.session_state.show_landing_page:
         st.button("Start Chatting", on_click=start_chatting, type="primary", use_container_width=True)
     
     with col2:
-        # Placeholder for an image or illustration
-        pass
-        
-else:
-    # Sidebar for chat session management ------------------------------------------------------------------
+        st.image("frontend/assets/landing_page_art_2_small.png", use_container_width=True)
+
+def render_sidebar():
+    """Render the sidebar for chat session management."""
+
     with st.sidebar:
         st.title("Chat Sessions")
         
@@ -171,13 +175,12 @@ else:
                         if chat_id == st.session_state.current_chat_id:
                             st.session_state.current_chat_id = list(st.session_state.chat_sessions.keys())[0]
                         st.rerun()
-                
-        else:
-            st.info("No chats yet. Click 'New Chat' to start.")
         
         st.divider()
 
-    # Main chat area ---------------------------------------------------------------------------------------
+def render_chat_area():
+    """Render the main chat area where users can interact with the chatbot."""
+
     st.title("Data Analysis Chatbot")
 
     if st.session_state.current_chat_id is None or not st.session_state.chat_sessions:
@@ -190,7 +193,7 @@ else:
             # Get and display current chat messages ----------------------------------------------------------------
             current_messages = st.session_state.chat_sessions[st.session_state.current_chat_id]
 
-            chat_container = st.container(height=500)
+            chat_container = st.container(height=450)
             with chat_container:
                 for message in current_messages:
                     with st.chat_message(message["role"]):
@@ -199,20 +202,40 @@ else:
             # Input field for user messages ------------------------------------------------------------------------
             input_container = st.container()
             with input_container:
+                with st.expander("Advanced LLM Settings"):
+                    col1, col2 = st.columns(2)
+                    temperature = st.slider(
+                        "Temperature", 
+                        min_value=0.0, 
+                        max_value=2.0, 
+                        value=0.2, 
+                        step=0.05,
+                        help="Higher values make output more random, lower values more deterministic"
+                    )
+                    with col1:
+                        top_p = st.slider(
+                            "Top P", 
+                            min_value=0.0, 
+                            max_value=1.0, 
+                            value=0.95, 
+                            step=0.05,
+                            help="Controls diversity via nucleus sampling"
+                        )
+                    with col2:
+                        top_k = st.slider(
+                            "Top K", 
+                            min_value=1, 
+                            max_value=100, 
+                            value=30, 
+                            step=1,
+                            help="Controls diversity by limiting to top K tokens"
+                        )
+                
                 if "submit_pressed" not in st.session_state:
                     st.session_state.submit_pressed = False
                 
-                def handle_input():
-                    """Handle user input submission."""
-                    if st.session_state.user_input:
-                        # Add user message to chat history
-                        current_messages.append({"role": "user", "content": st.session_state.user_input})
-                        
-                        st.session_state.submit_pressed = True
-                
                 with st.form(key="message_form", clear_on_submit=True):
-                    user_input = st.text_input("Ask a question about your data:",
-                                            key="user_input")
+                    user_input = st.text_input("Ask a question about your data:", key="user_input")
                     submit_button = st.form_submit_button("Send")
                     
                     if submit_button and user_input:
@@ -234,6 +257,9 @@ else:
                                             f"{BACKEND_URL}/gemini",
                                             json={
                                                 "prompt": user_input,
+                                                "temperature": temperature,
+                                                "top_p": top_p,
+                                                "top_k": top_k,
                                                 "session_id": backend_session_id
                                             }
                                         )
@@ -266,7 +292,7 @@ else:
         
         with viz_col:
             st.text("Visualizations")
-            viz_container = st.container(height=631)
+            viz_container = st.container(height=645)
             with viz_container:
                 current_session_id = st.session_state.current_chat_id
                 session_charts = st.session_state.chart_history.get(current_session_id, [])
@@ -284,13 +310,13 @@ else:
                                 tab1, tab2 = st.tabs(["Chart", "Dataframe"])
 
                                 if chart_data["chart_type"] == "bar":
-                                    tab1.bar_chart(df, x=chart_data["x_column"])
+                                    tab1.bar_chart(df, x=chart_data["x_column"], y=chart_data["y_column"].strip('[]').split(', '))
                                         
                                 elif chart_data["chart_type"] == "line":
-                                    tab1.line_chart(df, x=chart_data["x_column"])
+                                    tab1.line_chart(df, x=chart_data["x_column"], y=chart_data["y_column"].strip('[]').split(', '))
                                     
                                 elif chart_data["chart_type"] == "scatter":
-                                    tab1.scatter_chart(df, x=chart_data["x_column"])
+                                    tab1.scatter_chart(df, x=chart_data["x_column"], y=chart_data["y_column"].strip('[]').split(', '))
 
                                 tab2.dataframe(df, use_container_width=True)
                             
@@ -304,3 +330,18 @@ else:
                                     "text/csv",
                                     key=f"download_{i}"
                                 )
+
+
+# Main execution -------------------------------------------------------------------------------------------
+initialize_session_state()
+
+# Display landing page -------------------------------------------------------------------------------------
+if st.session_state.show_landing_page:
+    render_landing_page()
+    
+else:
+    # Sidebar for chat session management ------------------------------------------------------------------
+    render_sidebar()
+
+    # Main chat area ---------------------------------------------------------------------------------------
+    render_chat_area()

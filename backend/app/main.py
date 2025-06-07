@@ -70,7 +70,10 @@ def call_gemini(request: GeminiRequest):
         client = genai.Client(api_key=api_key)
         config = types.GenerateContentConfig(
             system_instruction=PROMPT_TEMPLATE,
-            tools=[query_database, generate_chart]
+            tools=[query_database, generate_chart],
+            temperature=request.temperature,
+            top_p=request.top_p,
+            top_k=request.top_k
         )
         
         # Create a conversation format for Gemini
@@ -82,6 +85,7 @@ def call_gemini(request: GeminiRequest):
             )
             history.append(content)
         
+        print(f"Temperature: {request.temperature}, Top P: {request.top_p}, Top K: {request.top_k}")
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=history,
@@ -91,8 +95,6 @@ def call_gemini(request: GeminiRequest):
         # Store assistant's response
         response_text = str(response.text)
         session_manager.add_message(session_id, "assistant", response_text)
-        
-        print(f"Gemini response: {response}")
 
         chart_data = None
         if hasattr(response, 'automatic_function_calling_history'):
