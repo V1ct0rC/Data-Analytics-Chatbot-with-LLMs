@@ -1,3 +1,11 @@
+"""
+Functions for querying a database and generating charts. Those functions are designed
+to be used by an LLM agent. and work with a PostgreSQL or SQLite database.
+
+In this module, all errors are returned to the agent as a dictionary with an "error" key.
+This approach allows the agent to attempt to handle errors and provide feedback to the user.
+"""
+
 import json
 import os
 import pandas as pd
@@ -44,21 +52,21 @@ def query_database(sql_query: str) -> list:
         A list of dictionaries representing [columns, rows] from the query result, or a dictionary with an error message if the query fails.
     """
     print(f"Executing SQL query: {sql_query}")
-
     engine = create_engine(DATABASE_URL)
+    
     try:
+        # Ensure the SQL query is safe to execute. Errors will be returned to the agent.
         with engine.connect() as conn:
             result = conn.execute(text(sql_query))
 
             rows = result.fetchall()
             columns = result.keys()
 
-            print(rows)
-            print(columns)
             result_dicts = []
             for row in rows:
                 row_dict = dict(zip(columns, row))
-                # Convert any Decimal objects to float
+
+                # Convert any Decimal objects to float so they can be serialized to JSON
                 for key, value in row_dict.items():
                     if isinstance(value, Decimal):
                         row_dict[key] = float(value)
@@ -123,11 +131,11 @@ def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y
         If an error occurs, it returns a dictionary with success set to False and an error message.
     """
     try:
-        # Get data from database
+        # Get data from database using the provided SQL query. Errors will be returned to the agent.
         data = query_database(sql_query)
         if not data or len(data) == 0:
             return {"success": False, "error": "No data returned from query"}
-            
+        
         return {
             "success": True,
             "chart_type": chart_type,
@@ -152,12 +160,14 @@ list_tables_declaration = {
 
 def list_tables() -> list:
     """
-    Lists all tables in the connected database.
+    Lists all tables in the connected database. Works with both PostgreSQL and SQLite databases.
+
     Returns:
         A list of table names.
     """
     engine = create_engine(DATABASE_URL)
     try:
+        # Connect to the database and retrieve the list of tables. Errors will be returned to the agent.
         with engine.connect() as conn:
             if engine.dialect.name == "postgresql":
                 result = conn.execute(

@@ -28,6 +28,17 @@ Without a cloud database, the code will automatically use a local SQLite databas
 ---
 ```bash
 cd .\backend\app\
-python .\db\default_database.py
 uvicorn main:app --reload
 ```
+
+```bash
+streamlit run .\frontend\app.py
+```
+
+---
+Future improvements:
+- The model does no work so well on new uploaded datasets, probably because it has no backgroud information about its columns. It would be great to have a way to provide the model with some context about the dataset.
+- There is no logic for multiple users, login, or authentication.
+- Some details like chat naming and user profile are not implemented.
+- The interface look well using streamlit, but it would be great to have a more polished and customizable UI.
+- A stronger error handling and validation in backend. I did not go deep into documentation of the libraries used, so there may be some edge cases that are not handled the best way.

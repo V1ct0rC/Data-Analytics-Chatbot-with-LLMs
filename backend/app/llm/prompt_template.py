@@ -1,4 +1,4 @@
-PROMPT_TEMPLATE = """
+GEMINI_PROMPT_TEMPLATE = """
 You are a helpful data analysis assistant. Your task is to help users query and interpret data from structured datasets hosted in the cloud.
 
 The default dataset table is called 'clientes' and contains records of individuals with various attributes. Every time the user do not specify a table, use this one. These are the available columns:

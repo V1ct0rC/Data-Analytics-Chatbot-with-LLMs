@@ -1,3 +1,8 @@
+"""
+Database and request models for Gemini chat application. They define the structure of 
+requests and chat sessions, avoiding seralization issues.
+"""
+
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime

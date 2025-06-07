@@ -1,18 +1,29 @@
+"""
+FastAPI backend for Data Science LLM application.
+This module provides endpoints for managing chat sessions, uploading CSV files, and interacting with a Gemini LLM.
+"""
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 
 import os
+import logging
 from typing import List
 
 from google import genai
 from google.genai import types
 
 from llm.agent_functions import query_database, generate_chart, list_tables
-from llm.prompt_template import PROMPT_TEMPLATE
+from llm.prompt_template import GEMINI_PROMPT_TEMPLATE
 import llm.session as session_manager
 
 from db.models import ChatSession, ChatMessage, ChatSessionRequest, GeminiRequest
 from db.db_functions import add_csv_to_database
+from dotenv import load_dotenv
 
+
+load_dotenv()
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(debug=True, title="Data Science LLM Backend", description="A backend service for interacting with SQL data and LLMs.")
 
@@ -60,7 +71,9 @@ async def upload_csv(table_name: str = Form(...), file: UploadFile = File(...)):
             return {"success": True, "message": f"Table '{table_name}' created successfully."}
         else:
             return {"success": False, "message": result.get("message", "Unknown error.")}
+        
     except Exception as e:
+        logger.error(f"Error uploading CSV: {e}")
         return {"success": False, "message": str(e)}
 
 # Message related endpoints --------------------------------------------------------------------------
@@ -68,18 +81,22 @@ async def upload_csv(table_name: str = Form(...), file: UploadFile = File(...)):
 def get_messages(session_id: str):
     """Get all messages in a chat session"""
     session = session_manager.get_session(session_id)
+
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    
     return session.messages
 
 # Agent related endpoints ----------------------------------------------------------------------------
 @app.post("/gemini")
 def call_gemini(request: GeminiRequest):
     api_key = os.getenv("GEMINI_API_KEY")
+
+    # Validate API key
     if not api_key:
         raise HTTPException(status_code=500, detail="API key not set in environment variables.")
     
-    # Create a new session if none provided
+    # Create a new session if none provided (just a fallback)
     session_id = request.session_id
     if not session_id:
         session = session_manager.create_session()
@@ -96,16 +113,21 @@ def call_gemini(request: GeminiRequest):
         # Get conversation history for context
         messages = session_manager.get_messages(session_id)
         
+        # Adjust the request parameters based on the request preferences
+        # In python, gemini is able to automatically handle function calling, so we can pass the tools directly.
+        # In other languages, we would need to pass the {function}_declaration, also specified on agent_functions
+        # file, and manage the function calls manually.
         client = genai.Client(api_key=api_key)
         config = types.GenerateContentConfig(
-            system_instruction=PROMPT_TEMPLATE,
+            system_instruction=GEMINI_PROMPT_TEMPLATE,
             tools=[query_database, generate_chart, list_tables],
             temperature=request.temperature,
             top_p=request.top_p,
             top_k=request.top_k
         )
+        print(f"Temperature: {request.temperature}, Top P: {request.top_p}, Top K: {request.top_k}")
         
-        # Create a conversation format for Gemini
+        # Create a conversation history in Gemini format
         history = []
         for msg in messages:
             content = types.Content(
@@ -114,7 +136,6 @@ def call_gemini(request: GeminiRequest):
             )
             history.append(content)
         
-        print(f"Temperature: {request.temperature}, Top P: {request.top_p}, Top K: {request.top_k}")
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=history,
@@ -126,6 +147,8 @@ def call_gemini(request: GeminiRequest):
         session_manager.add_message(session_id, "assistant", response_text)
 
         chart_data = None
+        # As the agent cannot directly return function call results, we need to check the response for function calls
+        # and responses. So we will look for function calls to produce charts on the frontend.
         if hasattr(response, 'automatic_function_calling_history'):
             for content in response.automatic_function_calling_history:
                 if hasattr(content, 'parts'):
