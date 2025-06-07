@@ -8,7 +8,7 @@ from decimal import Decimal
 
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///clientes.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -33,7 +33,7 @@ query_database_declaration = {
     }
 }
 
-def query_database(sql_query: str):
+def query_database(sql_query: str) -> list:
     """
     Executes a SQL query string and returns the results as a list of dictionaries.
 
@@ -69,8 +69,45 @@ def query_database(sql_query: str):
         print(f"Database query error: {e}")
         return [{"error": str(e)}]
 
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return [{"error": str(e)}]
 
-def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y_column: str):
+
+generate_chart_declaration = {
+    "name": "generate_chart",
+    "description": "Generates a chart based on the provided SQL query and parameters.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "chart_type": {
+                "type": "string",
+                "enum": ["bar", "line"],
+                "description": "The type of chart to generate ('bar', 'line')."
+            },
+            "sql_query": {
+                "type": "string",
+                "description": "The SQL query to execute against the database."
+            },
+            "title": {
+                "type": "string",
+                "description": "The title of the chart."
+            },
+            "x_column": {
+                "type": "string",
+                "description": "The column name for the x-axis."
+            },
+            "y_column": {
+                "type": "string",
+                "description": ("The column names for the y-axis. You can set more than one columns, format the list as a string '[]'. "
+                                "Make sure that this column exists in the query result. If needed make the query forehand to ensure the columns are present.")
+            }
+        },
+        "required": ["chart_type", "sql_query", "title", "x_column", "y_column"]
+    }
+}
+
+def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y_column: str) -> dict:
     """
     Executes SQL query and returns structured data for creating charts in the frontend.
 
@@ -101,6 +138,42 @@ def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y
         }
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+list_tables_declaration = {
+    "name": "list_tables",
+    "description": "Lists all tables in the connected database.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+    }
+}
+
+def list_tables() -> list:
+    """
+    Lists all tables in the connected database.
+    Returns:
+        A list of table names.
+    """
+    engine = create_engine(DATABASE_URL)
+    try:
+        with engine.connect() as conn:
+            if engine.dialect.name == "postgresql":
+                result = conn.execute(
+                    text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+                )
+            elif engine.dialect.name == "sqlite":
+                result = conn.execute(
+                    text("SELECT name FROM sqlite_master WHERE type='table'")
+                )
+            else:
+                return ["Unsupported database type"]
+            tables = [row[0] for row in result.fetchall()]
+            return tables
+    except Exception as e:
+        print(f"Error listing tables: {e}")
+        return []
 
 
 if __name__ == "__main__":

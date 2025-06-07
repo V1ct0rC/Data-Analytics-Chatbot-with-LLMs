@@ -1,13 +1,17 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+
 import os
-from google import genai
-from google.genai import types
 from typing import List
 
-from llm.agent_functions import query_database, generate_chart
+from google import genai
+from google.genai import types
+
+from llm.agent_functions import query_database, generate_chart, list_tables
 from llm.prompt_template import PROMPT_TEMPLATE
 import llm.session as session_manager
+
 from db.models import ChatSession, ChatMessage, ChatSessionRequest, GeminiRequest
+from db.db_functions import add_csv_to_database
 
 
 app = FastAPI(debug=True, title="Data Science LLM Backend", description="A backend service for interacting with SQL data and LLMs.")
@@ -16,17 +20,13 @@ app = FastAPI(debug=True, title="Data Science LLM Backend", description="A backe
 def read_root():
     return {"message": "Welcome to the FastAPI backend!"}
 
+# Session related endpoints --------------------------------------------------------------------------
 @app.post("/sessions", response_model=ChatSession)
 def create_session(request: ChatSessionRequest):
     """Create a new chat session"""
     new_session = session_manager.create_session(request.name)
     print(f"Created new session: {new_session.id}")
     return new_session
-
-@app.get("/sessions", response_model=List[ChatSession])
-def list_sessions():
-    """Get all chat sessions"""
-    return list(session_manager.chat_sessions.values())
 
 @app.get("/sessions/{session_id}", response_model=ChatSession)
 def get_session(session_id: str):
@@ -36,6 +36,34 @@ def get_session(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
     return session
 
+@app.delete("/sessions/{session_id}")
+def delete_session(session_id: str):
+    """Delete a chat session and its messages"""
+    deleted = session_manager.delete_session(session_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"success": True, "message": "Session deleted"}
+
+@app.get("/sessions", response_model=List[ChatSession])
+def list_sessions():
+    """Get all chat sessions"""
+    return session_manager.list_sessions()
+
+# Database related endpoints -------------------------------------------------------------------------
+@app.post("/upload_csv")
+async def upload_csv(table_name: str = Form(...), file: UploadFile = File(...)):
+    """Upload a CSV file and create a new table in the database."""
+    try:
+        contents = await file.read()
+        result = add_csv_to_database(table_name, contents)
+        if result.get("success"):
+            return {"success": True, "message": f"Table '{table_name}' created successfully."}
+        else:
+            return {"success": False, "message": result.get("message", "Unknown error.")}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+# Message related endpoints --------------------------------------------------------------------------
 @app.get("/sessions/{session_id}/messages", response_model=List[ChatMessage])
 def get_messages(session_id: str):
     """Get all messages in a chat session"""
@@ -44,6 +72,7 @@ def get_messages(session_id: str):
         raise HTTPException(status_code=404, detail="Session not found")
     return session.messages
 
+# Agent related endpoints ----------------------------------------------------------------------------
 @app.post("/gemini")
 def call_gemini(request: GeminiRequest):
     api_key = os.getenv("GEMINI_API_KEY")
@@ -70,7 +99,7 @@ def call_gemini(request: GeminiRequest):
         client = genai.Client(api_key=api_key)
         config = types.GenerateContentConfig(
             system_instruction=PROMPT_TEMPLATE,
-            tools=[query_database, generate_chart],
+            tools=[query_database, generate_chart, list_tables],
             temperature=request.temperature,
             top_p=request.top_p,
             top_k=request.top_k
@@ -119,4 +148,3 @@ def call_gemini(request: GeminiRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

@@ -1,3 +1,4 @@
+from ast import literal_eval
 import streamlit as st
 import requests
 import uuid
@@ -143,40 +144,72 @@ def render_sidebar():
         if st.session_state.chat_sessions:
             st.write("Your chats:")
 
-            for chat_id in st.session_state.chat_sessions.keys():
-                col1, col2 = st.columns([4, 1])
-                
-                display_name = st.session_state.session_names.get(chat_id, chat_id) if hasattr(st.session_state, "session_names") else chat_id
-                
-                if chat_id == st.session_state.current_chat_id:
-                    button_label = f":small_blue_diamond: {display_name}"
-                else:
-                    button_label = display_name
+            with st.container(height=300):
+                for chat_id in st.session_state.chat_sessions.keys():
+                    col1, col2 = st.columns([4, 1])
                     
-                if col1.button(button_label, key=f"select_{chat_id}", use_container_width=True):
-                    st.session_state.current_chat_id = chat_id
+                    display_name = st.session_state.session_names.get(chat_id, chat_id) if hasattr(st.session_state, "session_names") else chat_id
                     
-                    if chat_id in st.session_state.chart_history and st.session_state.chart_history[chat_id]:
-                        st.session_state.current_chart_data = st.session_state.chart_history[chat_id][-1]
+                    if chat_id == st.session_state.current_chat_id:
+                        button_label = f":small_blue_diamond: {display_name}"
                     else:
-                        st.session_state.current_chart_data = None
+                        button_label = display_name
                         
-                    st.rerun()
-                
-                if len(st.session_state.chat_sessions) > 1:
-                    if col2.button(":x:", key=f"delete_{chat_id}"):
-                        del st.session_state.chat_sessions[chat_id]
-                        if hasattr(st.session_state, "session_names"):
-                            del st.session_state.session_names[chat_id]
+                    if col1.button(button_label, key=f"select_{chat_id}", use_container_width=True):
+                        st.session_state.current_chat_id = chat_id
                         
-                        if chat_id in st.session_state.chart_history:
-                            del st.session_state.chart_history[chat_id]
-                        
-                        if chat_id == st.session_state.current_chat_id:
-                            st.session_state.current_chat_id = list(st.session_state.chat_sessions.keys())[0]
+                        if chat_id in st.session_state.chart_history and st.session_state.chart_history[chat_id]:
+                            st.session_state.current_chart_data = st.session_state.chart_history[chat_id][-1]
+                        else:
+                            st.session_state.current_chart_data = None
+                            
                         st.rerun()
-        
-        st.divider()
+                    
+                    if len(st.session_state.chat_sessions) > 1:
+                        if col2.button(":x:", key=f"delete_{chat_id}"):
+                            try:
+                                response = requests.delete(f"{BACKEND_URL}/sessions/{chat_id}")
+                                if response.status_code == 200:
+                                    del st.session_state.chat_sessions[chat_id]
+                                    if hasattr(st.session_state, "session_names"):
+                                        del st.session_state.session_names[chat_id]
+                                    if chat_id in st.session_state.chart_history:
+                                        del st.session_state.chart_history[chat_id]
+                                    if chat_id == st.session_state.current_chat_id:
+                                        st.session_state.current_chat_id = list(st.session_state.chat_sessions.keys())[0]
+                                    st.rerun()
+                                else:
+                                    st.error(f"Failed to delete session: {response.text}")
+                            except Exception as e:
+                                st.error(f"Error deleting session: {str(e)}")
+
+        st.markdown("#### Add a new table (CSV)", help="We do not perform any data validation or transformation. Please ensure your CSV is clean and ready for analysis.")
+        uploaded_file = st.file_uploader("Upload CSV", type=["csv"], key="csv_uploader")
+        table_name = st.text_input("Table name", key="table_name_input")
+        if uploaded_file and table_name:
+            if st.button("Upload and Create Table", key="upload_csv_btn"):
+                try:
+                    files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+                    data = {"table_name": table_name}
+                    response = requests.post(
+                        f"{BACKEND_URL}/upload_csv",
+                        files=files,
+                        data=data
+                    )
+                    result = response.json()
+                    if result.get("success"):
+                        st.success(result.get("message"))
+                    else:
+                        st.error(result.get("message"))
+                except Exception as e:
+                    st.error(f"Upload failed: {e}")
+
+def parse_y_column(y_column):
+    """Parse the y_column input to handle both string and list formats."""
+    try:
+        return literal_eval(y_column)
+    except Exception:
+        return y_column
 
 def render_chat_area():
     """Render the main chat area where users can interact with the chatbot."""
@@ -310,13 +343,13 @@ def render_chat_area():
                                 tab1, tab2 = st.tabs(["Chart", "Dataframe"])
 
                                 if chart_data["chart_type"] == "bar":
-                                    tab1.bar_chart(df, x=chart_data["x_column"], y=chart_data["y_column"].strip('[]').split(', '))
+                                    tab1.bar_chart(df, x=chart_data["x_column"], y=parse_y_column(chart_data["y_column"]))
                                         
                                 elif chart_data["chart_type"] == "line":
-                                    tab1.line_chart(df, x=chart_data["x_column"], y=chart_data["y_column"].strip('[]').split(', '))
+                                    tab1.line_chart(df, x=chart_data["x_column"], y=parse_y_column(chart_data["y_column"]))
                                     
                                 elif chart_data["chart_type"] == "scatter":
-                                    tab1.scatter_chart(df, x=chart_data["x_column"], y=chart_data["y_column"].strip('[]').split(', '))
+                                    tab1.scatter_chart(df, x=chart_data["x_column"], y=parse_y_column(chart_data["y_column"]))
 
                                 tab2.dataframe(df, use_container_width=True)
                             

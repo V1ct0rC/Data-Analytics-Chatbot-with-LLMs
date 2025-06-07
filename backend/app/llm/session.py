@@ -1,33 +1,91 @@
+from datetime import datetime
 from db.models import ChatSession, ChatMessage
 from typing import Dict, List, Optional
+from sqlalchemy import create_engine, text
 import uuid
+import os
 
 
-chat_sessions: Dict[str, ChatSession] = {}
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
+engine = create_engine(DATABASE_URL)
 
 def create_session(name: Optional[str] = None) -> ChatSession:
     """Create a new chat session"""
-    session = ChatSession(id=str(uuid.uuid4()), name=name)
-    chat_sessions[session.id] = session
-    return session
+    session_id = str(uuid.uuid4())
+    created_at = datetime.now()
+    with engine.connect() as conn:
+        conn.execute(
+            text("INSERT INTO chat_sessions (id, name, created_at) VALUES (:id, :name, :created_at)"),
+            {"id": session_id, "name": name, "created_at": created_at}
+        )
+        conn.commit()
+    return ChatSession(id=session_id, name=name, created_at=created_at, messages=[])
 
 def get_session(session_id: str) -> Optional[ChatSession]:
     """Get a chat session by ID"""
-    return chat_sessions.get(session_id)
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT id, name, created_at FROM chat_sessions WHERE id = :id"),
+            {"id": session_id}
+        ).fetchone()
+        if not result:
+            return None
+        messages = get_messages(session_id)
+        return ChatSession(
+            id=result[0],
+            name=result[1],
+            created_at=result[2],
+            messages=messages
+        )
+
+def delete_session(session_id: str) -> bool:
+    """Delete a chat session and its messages"""
+    with engine.connect() as conn:
+        # Delete messages first due to foreign key constraint
+        conn.execute(
+            text("DELETE FROM chat_messages WHERE session_id = :session_id"),
+            {"session_id": session_id}
+        )
+        result = conn.execute(
+            text("DELETE FROM chat_sessions WHERE id = :session_id"),
+            {"session_id": session_id}
+        )
+        conn.commit()
+        return result.rowcount > 0
+
+def list_sessions() -> List[ChatSession]:
+    """Get all chat sessions"""
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT id, name, created_at FROM chat_sessions")
+        ).fetchall()
+        sessions = []
+        for row in result:
+            messages = get_messages(row[0])
+            sessions.append(ChatSession(
+                id=row[0],
+                name=row[1],
+                created_at=row[2],
+                messages=messages
+            ))
+        return sessions
 
 def add_message(session_id: str, role: str, content: str) -> Optional[ChatMessage]:
     """Add a message to a chat session"""
-    session = get_session(session_id)
-    if not session:
-        return None
-    
-    message = ChatMessage(role=role, content=content)
-    session.messages.append(message)
-    return message
+    timestamp = datetime.now()
+    with engine.connect() as conn:
+        conn.execute(
+            text("INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (:session_id, :role, :content, :timestamp)"),
+            {"session_id": session_id, "role": role, "content": content, "timestamp": timestamp}
+        )
+        conn.commit()
+    return ChatMessage(role=role, content=content, timestamp=timestamp)
 
 def get_messages(session_id: str) -> List[ChatMessage]:
     """Get all messages in a chat session"""
-    session = get_session(session_id)
-    if not session:
-        return []
-    return session.messages
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("SELECT role, content, timestamp FROM chat_messages WHERE session_id = :session_id ORDER BY timestamp"),
+            {"session_id": session_id}
+        ).fetchall()
+        return [ChatMessage(role=row[0], content=row[1], timestamp=row[2]) for row in result]
