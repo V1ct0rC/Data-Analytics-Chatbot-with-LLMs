@@ -2,16 +2,57 @@ import streamlit as st
 import requests
 import uuid
 import os
+import pandas as pd
 
 
 st.set_page_config(page_title="Data Analysis Chatbot", layout="wide")
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 
+
+def load_sessions_from_backend():
+    """Load all sessions and their messages from the backend."""
+    try:
+        # Get all sessions
+        response = requests.get(f"{BACKEND_URL}/sessions")
+        if response.status_code == 200:
+            sessions = response.json()
+            
+            for session in sessions:
+                session_id = session["id"]
+                
+                if session_id in st.session_state.chat_sessions:
+                    continue
+                    
+                msg_response = requests.get(f"{BACKEND_URL}/sessions/{session_id}/messages")
+                if msg_response.status_code == 200:
+                    messages = msg_response.json()
+                    
+                    # Convert to the format used in frontend
+                    frontend_messages = [
+                        {"role": msg["role"], "content": msg["content"]} 
+                        for msg in messages
+                    ]
+                    
+                    st.session_state.chat_sessions[session_id] = frontend_messages
+                    st.session_state.session_names[session_id] = session.get("name", f"Chat {session_id[:6]}")
+                    
+                    if session_id not in st.session_state.chart_history:
+                        st.session_state.chart_history[session_id] = []
+            
+            if st.session_state.current_chat_id is None and st.session_state.chat_sessions:
+                st.session_state.current_chat_id = list(st.session_state.chat_sessions.keys())[0]
+                
+            return True
+        return False
+    except Exception as e:
+        st.error(f"Error loading sessions: {str(e)}")
+        return False
+
 # Initialize session states
 if "chat_sessions" not in st.session_state:
     st.session_state.chat_sessions = {}
     st.session_state.session_names = {}
-    
+
 if "current_chat_id" not in st.session_state:
     st.session_state.current_chat_id = None
 
@@ -23,6 +64,15 @@ if "current_chart_data" not in st.session_state:
 
 if "chart_history" not in st.session_state:
     st.session_state.chart_history = {}
+
+# Load existing sessions from backend
+if "sessions_loaded" not in st.session_state:
+    sessions_loaded = load_sessions_from_backend()
+    st.session_state.sessions_loaded = True
+    
+    # If sessions were loaded and this is first run, skip landing page
+    if sessions_loaded and st.session_state.chat_sessions:
+        st.session_state.show_landing_page = False
 
 def start_chatting():
     """Callback to hide the landing page and show the chat interface."""
@@ -227,19 +277,22 @@ else:
                     for i, chart_data in enumerate(session_charts):
                         if chart_data["success"]:
                             with st.container():
-                                st.markdown(f"### {chart_data['title']}")
+                                st.markdown(f"#### {chart_data['title']}")
                                 
-                                import pandas as pd
                                 df = pd.DataFrame(chart_data["data"])
                                 
+                                tab1, tab2 = st.tabs(["Chart", "Dataframe"])
+
                                 if chart_data["chart_type"] == "bar":
-                                    st.bar_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
+                                    tab1.bar_chart(df, x=chart_data["x_column"])
                                         
                                 elif chart_data["chart_type"] == "line":
-                                    st.line_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
+                                    tab1.line_chart(df, x=chart_data["x_column"])
                                     
                                 elif chart_data["chart_type"] == "scatter":
-                                    st.scatter_chart(df, x=chart_data["x_column"], y=chart_data["y_column"])
+                                    tab1.scatter_chart(df, x=chart_data["x_column"])
+
+                                tab2.dataframe(df, use_container_width=True)
                             
                                 if i < len(session_charts) - 1:
                                     st.divider()
