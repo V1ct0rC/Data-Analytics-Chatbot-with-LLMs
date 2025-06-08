@@ -3,6 +3,7 @@ from ast import literal_eval
 import pandas as pd
 from modules.api import send_message
 
+
 def parse_y_column(y_column):
     """Parse the y_column input to handle both string and list formats."""
     try:
@@ -40,29 +41,21 @@ def render_chat_area(backend_url: str) -> None:
                             "Provider", 
                             providers,
                             index=providers.index(st.session_state.current_provider) if st.session_state.current_provider in providers else 0,
-                            key="provider_select"
+                            key="provider_select",
+                            help="Select the LLM provider to use for generating responses. The available providers depend on your configuration and API keys."
                         )
                         st.session_state.current_provider = provider
                         
                         # Model selection for current provider
                         if provider in st.session_state.providers and st.session_state.providers[provider]:
                             models = st.session_state.providers[provider]
-                            if isinstance(models, list):
+                            if models:
                                 model = st.selectbox(
                                     "Model",
                                     models,
                                     index=0 if st.session_state.current_model not in models else models.index(st.session_state.current_model),
-                                    key="model_select"
-                                )
-                                st.session_state.current_model = model
-                            elif isinstance(models, dict):
-                                model_names = list(models.keys())
-                                model = st.selectbox(
-                                    "Model",
-                                    model_names,
-                                    index=0 if st.session_state.current_model not in model_names else model_names.index(st.session_state.current_model),
                                     key="model_select",
-                                    format_func=lambda x: f"{x} - {models[x]}" if x in models else x
+                                    help="Select the model to use for this provider. The response quality may vary geatly depending on the model selected."
                                 )
                                 st.session_state.current_model = model
                     

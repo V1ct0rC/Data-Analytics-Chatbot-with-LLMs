@@ -7,6 +7,7 @@ from ui.landing_page import render_landing_page
 from ui.sidebar import render_sidebar
 from ui.chat import render_chat_area
 
+
 # Set page configuration
 st.set_page_config(page_title="Data Analysis Chatbot", layout="wide")
 

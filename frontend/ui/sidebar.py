@@ -3,6 +3,7 @@ import uuid
 import requests
 from modules.api import create_session, upload_csv, get_available_providers
 
+
 def render_sidebar(backend_url: str) -> None:
     """Render the sidebar for chat session management and data upload."""
     with st.sidebar:

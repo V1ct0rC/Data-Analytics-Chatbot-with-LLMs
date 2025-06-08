@@ -1,6 +1,7 @@
 import streamlit as st
 from modules.utils import start_chatting
 
+
 def render_landing_page() -> None:
     """Render the landing page with a welcome message and instructions."""
     col1, col2 = st.columns([1, 2])
