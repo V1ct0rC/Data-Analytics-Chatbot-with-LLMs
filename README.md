@@ -11,7 +11,7 @@ Here is a video demo of the application in action, it shows a brief overview of 
 
 [Watch the demo video on Google Drive](https://drive.google.com/file/d/1sVwMaYjG0K-erpBoN5SanHFnXuBb3nQg/view?usp=sharing)
 
-> This video is currently outdated, as it was recorded before the latest major changes were made to the repository. However, it still provides a good overview of the project and its functionalities. I plan to update the video in the future to reflect the latest changes and improvements made to the project.
+> This video is currently outdated, as it was recorded before the latest major changes were made to the repository (multi LLM Provider support, factory pattern for easy escalation, better handling on cloud routines). However, it still provides a good overview of the project and its functionalities. I plan to update the video in the future to reflect the latest changes and improvements made to the project.
 
 ## Architecture Overview
 This repo is divided into three main parts: the frontend, the backend and the cloud. The frontend is responsible for the user interface, while the backend handles the logic of processing user queries, interacting with the database, and generating responses. The cloud part is responsible for creatng the infrascructure and hosting the database and making it accessible to the backend.
@@ -55,6 +55,8 @@ For the frontend, I used [Streamlit](https://streamlit.io/), a powerful framewor
 The main LLM provider used in this project is [Google Gemini](https://ai.google.dev/gemini), which provides powerful language models that can understand and generate natural language text. The models are used to interpret user queries, translate them into SQL queries, and generate responses based on the results of the queries. Gemini was chosen because it seamlessly integrates with Python functions and have a robust API for interacting with the backend.
 
 Along with the main LLM provider, I also implemented a factory pattern to allow for easy integration of other LLM providers in the future. This way, the chatbot can be easily extended to support multiple LLM providers without changing the core logic of the application. As an example, I added another provider, [Groq](https://groq.com/), by just creating a new file in the `llm/providers/`.
+
+> For more details about each part of the project, please refer to the respective directories: `frontend/`, `backend/`, and `cloud/`. They all contain their own README files with more information about the implementation, design choices, and improvements that can be made.
 
 ## Installation and Setup
 To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
