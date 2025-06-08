@@ -5,6 +5,8 @@ This repository contains implementations for a data analytics chatbot with LLMs.
 
 ![Chat Session](frontend/assets/chat_session_print.png)
 
+![Chat Providers](frontend/assets/chat_providers_print.png)
+
 Here is a video demo of the application in action, it shows a brief overview of the features and functionalities of the chatbot and explains the repository structure [PT-BR]:
 
 [Watch the demo video on Google Drive](https://drive.google.com/file/d/1sVwMaYjG0K-erpBoN5SanHFnXuBb3nQg/view?usp=sharing)
@@ -52,7 +54,7 @@ For the frontend, I used [Streamlit](https://streamlit.io/), a powerful framewor
 
 The main LLM provider used in this project is [Google Gemini](https://ai.google.dev/gemini), which provides powerful language models that can understand and generate natural language text. The models are used to interpret user queries, translate them into SQL queries, and generate responses based on the results of the queries. Gemini was chosen because it seamlessly integrates with Python functions and have a robust API for interacting with the backend.
 
-Along with the main LLM provider, I also implemented a factory pattern to allow for easy integration of other LLM providers in the future. This way, the chatbot can be easily extended to support multiple LLM providers without changing the core logic of the application.
+Along with the main LLM provider, I also implemented a factory pattern to allow for easy integration of other LLM providers in the future. This way, the chatbot can be easily extended to support multiple LLM providers without changing the core logic of the application. As an example, I added another provider, [Groq](https://groq.com/), by just creating a new file in the `llm/providers/`.
 
 ## Installation and Setup
 To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
@@ -104,18 +106,18 @@ python run.py
 ## Comments and Thoughts
 Biggest difficulties:
 - Organizing the code in a way that is easy to understand and maintain.
-- Ensuring that the chatbot can call the right functions with the right parameters based on the user's query.
-- By far, the most challenging part was running all the code together from a single entry point, as the code is divided into multiple files and modules. I had to ensure that all the imports and dependencies were correctly set up, and that the code could be executed in a single run without any issues.
+- Ensuring that the chatbot can call the right functions with the right parameters based on the user's query, especially when dealing with different LLM providers and their specific requirements.
+- Making the conversation context persistent across multiple queries and multiple models, so that any chatbot can provide meaningful responses based on the user's previous queries and continue the conversation seamlessly.
 - By far, the most challenging part was running all the code together from a single entry point, as the code is divided into multiple files and modules. I had to ensure that all the imports and dependencies were correctly set up, and that the code could be executed in a single run without any issues.
 
 ---
 Future improvements:
-- The model does no work so well on new uploaded datasets, probably because it has no backgroud information about its columns. It would be great to have a way to provide the model with some context about the dataset.
+- The model does no work so well on newly uploaded datasets, probably because it has no backgroud information about its columns. It would be great to have a way to provide the model with some context about the dataset.
 - There is no logic for multiple users, login, or authentication.
 - Some details like chat naming and user profile are not implemented.
 - The interface look well using streamlit, but it would be great to have a more polished and customizable UI.
 - A stronger error handling and validation in backend. I did not go deep into documentation of the libraries used, so there may be some edge cases that are not handled the best way.
 - Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.
-- Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.
+- Display in a better way the thinking process of the models that support it, especially Deepseek R1, that usually thinks a lot before answering.
 
 > You may notice that some commits were made after I turned in the assignment (07/06/2025). However, since the submission deadline was 09/06/2025, I took the liberty of continuing to improve the project.

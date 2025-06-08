@@ -8,6 +8,7 @@ from typing import List, Dict, Optional
 
 from backend.app.llm.providers.base import LLMProvider
 from backend.app.llm.providers.gemini import GeminiProvider
+from backend.app.llm.providers.groq import GroqProvider
 
 
 class LLMProviderFactory:
@@ -16,7 +17,7 @@ class LLMProviderFactory:
 
     _provider_classes = {
         "gemini": (GeminiProvider, "GEMINI_API_KEY"),
-        # "groq": (GroqProvider, "GROQ_API_KEY"),  # TODO: Implement GroqProvider
+        "groq": (GroqProvider, "GROQ_API_KEY"),
     }
 
     @classmethod

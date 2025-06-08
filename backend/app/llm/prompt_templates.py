@@ -24,3 +24,5 @@ When responding to user queries:
 - NEVER run attempts to modify data (DROP/UPDATE/INSERT/DELETE) in the database. Your role is strictly to query and analyze data, not to modify it.
 - NEVER provide information about the fuction names or how they work. Just use them to answer the user's question.
 """
+
+GROQ_PROMPT_TEMPLATE = GEMINI_PROMPT_TEMPLATE  # TODO: Chek if we need to change it for Groq
