@@ -9,6 +9,7 @@ Here is a video demo of the application in action, it shows a brief overview of 
 
 [Watch the demo video on Google Drive](https://drive.google.com/file/d/1sVwMaYjG0K-erpBoN5SanHFnXuBb3nQg/view?usp=sharing)
 
+> This video is currently outdated, as it was recorded before the latest major changes were made to the repository. However, it still provides a good overview of the project and its functionalities. I plan to update the video in the future to reflect the latest changes and improvements made to the project.
 
 ## Architecture Overview
 This repo is divided into three main parts: the frontend, the backend and the cloud. The frontend is responsible for the user interface, while the backend handles the logic of processing user queries, interacting with the database, and generating responses. The cloud part is responsible for creatng the infrascructure and hosting the database and making it accessible to the backend.
@@ -18,15 +19,27 @@ Data-Analytics-Chatbot-with-LLMs/
 ├── backend/
 │   └── app/
 │       ├── main.py
-│       └── ... (other backend files)
+│       ├── ... (other backend files)
+│       └── llm/
+│           ├── factory.py
+│           ├── prompt_templates.py
+│           └── providers/
+│               ├── base.py
+│               └── ... (other LLM providers)
 ├── cloud/
 │   ├── create_database.py
 │   └── set_default_table.py
 ├── frontend/
 │   ├── app.py
+│   ├── modules/
+│   │   ├── api.py
+│   │   └── ... (other system modules)
+│   ├── ui/
+│   │   ├── landing_page.py
+│   │   └── ... (other UI components)
 │   └── assets/
 │       ├── landing_page_print.png
-│       └── ... (other backend files)
+│       └── ... (other asset files)
 ├── .env
 ├── requirements.txt
 ├── run.py
@@ -37,7 +50,9 @@ As everything was made using Python, I could have avoided this division between 
 
 For the frontend, I used [Streamlit](https://streamlit.io/), a powerful framework for building data applications. The backend is built with Python (FastAPI), using libraries such as [SQLAlchemy](https://www.sqlalchemy.org/) for database interactions. The cloud part is implemented using [AWS RDS](https://aws.amazon.com/rds/) for hosting the database, and [Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) for interacting with AWS services.
 
-The LLM model used in this project is [Google Gemini](https://ai.google.dev/gemini), which is a powerful language model that can understand and generate natural language text. The model is used to interpret user queries, translate them into SQL queries, and generate responses based on the results of the queries. Gemini was chosen because it seamlessly integrates with Python functions and have a robust API for interacting with the backend.
+The main LLM provider used in this project is [Google Gemini](https://ai.google.dev/gemini), which provides powerful language models that can understand and generate natural language text. The models are used to interpret user queries, translate them into SQL queries, and generate responses based on the results of the queries. Gemini was chosen because it seamlessly integrates with Python functions and have a robust API for interacting with the backend.
+
+Along with the main LLM provider, I also implemented a factory pattern to allow for easy integration of other LLM providers in the future. This way, the chatbot can be easily extended to support multiple LLM providers without changing the core logic of the application.
 
 ## Installation and Setup
 To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:

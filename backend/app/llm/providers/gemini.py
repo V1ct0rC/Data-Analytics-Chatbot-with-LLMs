@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 
 from backend.app.llm.providers.base import LLMProvider
 from backend.app.llm.agent_functions import query_database, generate_chart, list_tables
-from backend.app.llm.prompt_template import GEMINI_PROMPT_TEMPLATE
+from backend.app.llm.prompt_templates import GEMINI_PROMPT_TEMPLATE
 
 from backend.app.db.models import ChatMessage
 

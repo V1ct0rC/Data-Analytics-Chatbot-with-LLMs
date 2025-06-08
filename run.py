@@ -3,6 +3,7 @@ import os
 import signal
 import sys
 
+
 def run_backend():
     # Run uvicorn from root dir, using full module path
     return subprocess.Popen(
