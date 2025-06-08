@@ -9,6 +9,12 @@ For the frontend, I used [Streamlit](https://streamlit.io/), a powerful framewor
 
 The LLM model used in this project is [Google Gemini](https://ai.google.dev/gemini), which is a powerful language model that can understand and generate natural language text. The model is used to interpret user queries, translate them into SQL queries, and generate responses based on the results of the queries. Gemini was chosen because it seamlessly integrates with Python functions and have a robust API for interacting with the backend.
 
+Here is a video demo of the application in action, it shows a brief overview of the features and functionalities of the chatbot and explains the repository structure [PT-BR]:
+
+[Demo Video (MP4)](frontend/assets/app_demo.mp4)
+
+<video src="frontend/assets/app_demo.mp4" controls width="600"></video>
+
 ---
 To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
 
@@ -62,6 +68,7 @@ Biggest difficulties:
 - Organizing the code in a way that is easy to understand and maintain.
 - Ensuring that the chatbot can call the right functions with the right parameters based on the user's query.
 - By far, the most challenging part was running all the code together from a single entry point, as the code is divided into multiple files and modules. I had to ensure that all the imports and dependencies were correctly set up, and that the code could be executed in a single run without any issues.
+- By far, the most challenging part was running all the code together from a single entry point, as the code is divided into multiple files and modules. I had to ensure that all the imports and dependencies were correctly set up, and that the code could be executed in a single run without any issues.
 
 ---
 Future improvements:
@@ -70,4 +77,5 @@ Future improvements:
 - Some details like chat naming and user profile are not implemented.
 - The interface look well using streamlit, but it would be great to have a more polished and customizable UI.
 - A stronger error handling and validation in backend. I did not go deep into documentation of the libraries used, so there may be some edge cases that are not handled the best way.
+- Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.
 - Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.

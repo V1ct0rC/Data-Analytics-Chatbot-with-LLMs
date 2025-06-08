@@ -125,14 +125,14 @@ generate_chart_declaration = {
 
 def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y_column: str) -> dict:
     """
-    Executes SQL query and returns structured data for creating charts in the frontend.
+    Executes SQL query and returns structured data for creating charts in the frontend. Feel free to query beforehand using query_database to ensure the columns are present.
 
     Args:
         chart_type: The type of chart to generate ('bar', 'line').
         sql_query: The SQL query to execute against the database.
         title: The title of the chart.
         x_column: The column name for the x-axis. Make sure it is a valid column in the query result.
-        y_column: The columns names for the y-axis. You can set more than one columns, format the list as a string '[]'. Make sure that this column exists in the query result. If needed make the query forehand to ensure the columns are present.
+        y_column: The columns names for the y-axis. You can set more than one column, format the list as a string '[]'. Make sure that this column exists in the query result. If needed make the query forehand to ensure the columns are present.
     
     Returns:
         A dictionary containing the chart type, title, x_column, y_column, and data for the chart.
