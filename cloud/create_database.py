@@ -1,4 +1,5 @@
 import boto3
+import botocore
 import os
 from dotenv import load_dotenv
 
@@ -12,6 +13,7 @@ DB_NAME = os.getenv("DB_NAME", "myautodatabase")
 DB_INSTANCE_IDENTIFIER = os.getenv("DB_INSTANCE_IDENTIFIER", "myautodbinstance")
 DB_USERNAME = os.getenv("DB_USERNAME", "db_username")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "db_password")
+
 
 def create_rds_database(db_name: str, db_instance_identifier: str, db_username: str, db_password: str) -> dict:
     """
@@ -41,20 +43,33 @@ def create_rds_database(db_name: str, db_instance_identifier: str, db_username: 
     except rds_client.exceptions.DBInstanceNotFoundFault:
         print(f"Creating new RDS instance: {db_instance_identifier}")
 
-    waiter = rds_client.get_waiter('db_instance_available')
+    except botocore.exceptions.ClientError as e:
+        raise botocore.exceptions.ClientError(f"Error checking RDS instance: {str(e)}")
+    
+    except Exception as e:
+        raise Exception(f"Unexpected error checking RDS instance: {str(e)}")
 
-    response = rds_client.create_db_instance(
-        DBName=db_name,
-        DBInstanceIdentifier=db_instance_identifier,
-        AllocatedStorage=20,
-        DBInstanceClass='db.t4g.micro',
-        Engine='postgres',
-        MasterUsername=db_username,
-        MasterUserPassword=db_password,
-        BackupRetentionPeriod=7,
-        PubliclyAccessible=True
-    )
+    try:
+        response = rds_client.create_db_instance(
+            DBName=db_name,
+            DBInstanceIdentifier=db_instance_identifier,
+            AllocatedStorage=20,
+            DBInstanceClass='db.t4g.micro',
+            Engine='postgres',
+            MasterUsername=db_username,
+            MasterUserPassword=db_password,
+            BackupRetentionPeriod=7,
+            PubliclyAccessible=True
+        )
+
+    except botocore.exceptions.ClientError as e:
+        raise botocore.exceptions.ClientError(f"Error creating RDS instance: {str(e)}")
+    
+    except Exception as e:
+        raise Exception(f"Error creating RDS instance: {str(e)}")
+
     # Wait for the DB instance to be available
+    waiter = rds_client.get_waiter('db_instance_available')
     waiter.wait(DBInstanceIdentifier=db_instance_identifier)
 
     url = f"postgresql+psycopg2://{db_username}:{db_password}@{response['DBInstance']['Endpoint']['Address']}:{response['DBInstance']['Endpoint']['Port']}/{db_name}"

@@ -5,17 +5,41 @@ This repository contains implementations for a data analytics chatbot with LLMs.
 
 ![Chat Session](frontend/assets/chat_session_print.png)
 
+Here is a video demo of the application in action, it shows a brief overview of the features and functionalities of the chatbot and explains the repository structure [PT-BR]:
+
+[Watch the demo video on Google Drive](https://drive.google.com/file/d/1sVwMaYjG0K-erpBoN5SanHFnXuBb3nQg/view?usp=sharing)
+
+
+## Architecture Overview
 This repo is divided into three main parts: the frontend, the backend and the cloud. The frontend is responsible for the user interface, while the backend handles the logic of processing user queries, interacting with the database, and generating responses. The cloud part is responsible for creatng the infrascructure and hosting the database and making it accessible to the backend.
+
+```bash
+Data-Analytics-Chatbot-with-LLMs/
+├── backend/
+│   └── app/
+│       ├── main.py
+│       └── ... (other backend files)
+├── cloud/
+│   ├── create_database.py
+│   └── set_default_table.py
+├── frontend/
+│   ├── app.py
+│   └── assets/
+│       ├── landing_page_print.png
+│       └── ... (other backend files)
+├── .env
+├── requirements.txt
+├── run.py
+└── README.md
+```
+
+As everything was made using Python, I could have avoided this division between front and backend, but I wanted to create a more modular and scalable architecture, similar to real-world web applications. This way, the frontend can be easily replaced or updated without affecting the backend logic, and vice versa.
 
 For the frontend, I used [Streamlit](https://streamlit.io/), a powerful framework for building data applications. The backend is built with Python (FastAPI), using libraries such as [SQLAlchemy](https://www.sqlalchemy.org/) for database interactions. The cloud part is implemented using [AWS RDS](https://aws.amazon.com/rds/) for hosting the database, and [Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) for interacting with AWS services.
 
 The LLM model used in this project is [Google Gemini](https://ai.google.dev/gemini), which is a powerful language model that can understand and generate natural language text. The model is used to interpret user queries, translate them into SQL queries, and generate responses based on the results of the queries. Gemini was chosen because it seamlessly integrates with Python functions and have a robust API for interacting with the backend.
 
-Here is a video demo of the application in action, it shows a brief overview of the features and functionalities of the chatbot and explains the repository structure [PT-BR]:
-
-[Watch the demo video on Google Drive](https://drive.google.com/file/d/1sVwMaYjG0K-erpBoN5SanHFnXuBb3nQg/view?usp=sharing)
-
----
+## Installation and Setup
 To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
 
 ```bash
@@ -57,13 +81,12 @@ A new AWS RDS database will be created, and the `DATABASE_URL` will be automatic
 
 Without a cloud database or AWS credencials, the code will automatically use a local SQLite database.
 
----
 With all set, you can run the application via:
 ```bash
 python run.py
 ```
 
----
+## Comments and Thoughts
 Biggest difficulties:
 - Organizing the code in a way that is easy to understand and maintain.
 - Ensuring that the chatbot can call the right functions with the right parameters based on the user's query.
@@ -79,3 +102,5 @@ Future improvements:
 - A stronger error handling and validation in backend. I did not go deep into documentation of the libraries used, so there may be some edge cases that are not handled the best way.
 - Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.
 - Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.
+
+> You may notice that some commits were made after I turned in the assignment (07/06/2025). However, since the submission deadline was 09/06/2025, I took the liberty of continuing to improve the project.
