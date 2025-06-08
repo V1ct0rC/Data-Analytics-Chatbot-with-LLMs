@@ -3,6 +3,8 @@ This repository contains implementations for a data analytics chatbot with LLMs.
 
 ![Landing Page](frontend/assets/landing_page_print.png)
 
+![Chat Session](frontend/assets/chat_session_print.png)
+
 This repo is divided into three main parts: the frontend, the backend and the cloud. The frontend is responsible for the user interface, while the backend handles the logic of processing user queries, interacting with the database, and generating responses. The cloud part is responsible for creatng the infrascructure and hosting the database and making it accessible to the backend.
 
 For the frontend, I used [Streamlit](https://streamlit.io/), a powerful framework for building data applications. The backend is built with Python (FastAPI), using libraries such as [SQLAlchemy](https://www.sqlalchemy.org/) for database interactions. The cloud part is implemented using [AWS RDS](https://aws.amazon.com/rds/) for hosting the database, and [Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) for interacting with AWS services.
@@ -11,9 +13,7 @@ The LLM model used in this project is [Google Gemini](https://ai.google.dev/gemi
 
 Here is a video demo of the application in action, it shows a brief overview of the features and functionalities of the chatbot and explains the repository structure [PT-BR]:
 
-[Demo Video (MP4)](frontend/assets/app_demo.mp4)
-
-<video src="frontend/assets/app_demo.mp4" controls width="600"></video>
+[Watch the demo video on Google Drive](https://drive.google.com/file/d/1sVwMaYjG0K-erpBoN5SanHFnXuBb3nQg/view?usp=sharing)
 
 ---
 To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
