@@ -5,8 +5,20 @@ is loaded from a CSV file hosted on GitHub, as requested for the challenge.
 import os
 import pandas as pd
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
@@ -48,7 +60,7 @@ def prepare_default_data():
     df = df.rename(columns=column_mapping)
 
     df["uf"] = df["uf"].str.strip().str.upper()
-    df["classe_social"] = df["classe_social"].str.strip()
+    df["classe_social"] = df["classe_social"].str.strip().str.upper()
     df["sexo"] = df["sexo"].str.strip().str.upper()
 
     return df[cols]
@@ -59,7 +71,12 @@ def start_database():
     Start the database by creating necessary tables and loading default data.
     """
     
-    df = prepare_default_data()
+    try:
+        df = prepare_default_data()
+    except Exception as e:
+        logger.error(f"Failed to prepare data: {e}")
+        logger.info("Exiting without starting the database.")
+        return
 
     try:
         engine = create_engine(DATABASE_URL)
@@ -106,32 +123,34 @@ def start_database():
                 method="multi",
                 chunksize=200
             )
-            print(f"Successfully loaded {len(df)} records into the 'clientes' table.")
+            logger.info(f"Successfully loaded {len(df)} records into the 'clientes' table.")
 
+    except SQLAlchemyError as e:
+        logger.error(f"SQLAlchemy error during database operations: {e}")
+        logger.info("Exiting without starting the database.")
+        return
+    
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"Unexpected error: {e}")
+        logger.info("Exiting without starting the database.")
+        return
+    
+    finally:
+        if engine:
+            engine.dispose(close=True)
 
 
 if __name__ == "__main__":
     try:
-        print(f"Using database URL: {DATABASE_URL}")
+        logger.info(f"Using database URL: {DATABASE_URL}")
         start_database()
 
+        # Just a test to see if the database is working with the default dataset
         engine = create_engine(DATABASE_URL)
         with engine.connect() as conn:
             result = conn.execute(text("SELECT COUNT(*) FROM clientes"))
             count = result.scalar()
-            print(f"Total records in the database: {count}")
+            logger.info(f"Total records in the database: {count}")
 
-            # result = conn.execute(text("SELECT * FROM clientes LIMIT 5"))
-            # for row in result:
-            #     print(row)
-
-            # #list all tables in the database
-            # result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"))
-            # tables = result.fetchall()
-            # print("Tables in the database:")
-            # for table in tables:
-            #     print(table[0])
     except Exception as e:
-        print(f"An error occurred while counting records: {e}")
+        logger.error(f"Unknown error during database initialization: {e}", exc_info=True)

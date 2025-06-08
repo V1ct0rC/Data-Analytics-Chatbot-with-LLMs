@@ -5,24 +5,16 @@ This module provides endpoints for managing chat sessions, uploading CSV files, 
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 
-import os
 import logging
 from dotenv import load_dotenv
 from typing import List
 
-from google import genai
-from google.genai import types
-
 from backend.app.llm.factory import LLMProviderFactory
-from backend.app.llm.agent_functions import (
-    query_database, generate_chart, list_tables
-)
-from backend.app.llm.prompt_templates import GEMINI_PROMPT_TEMPLATE
 import backend.app.llm.session as session_manager
 
 from backend.app.db.models import (
     ChatSession, ChatMessage, ChatSessionRequest, 
-    GeminiRequest, GenerateRequest
+    GenerateRequest
 )
 from backend.app.db.db_functions import add_csv_to_database
 
