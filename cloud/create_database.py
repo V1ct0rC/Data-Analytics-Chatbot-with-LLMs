@@ -2,7 +2,18 @@ import boto3
 import botocore
 import os
 from dotenv import load_dotenv
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY", None)
@@ -37,16 +48,18 @@ def create_rds_database(db_name: str, db_instance_identifier: str, db_username: 
     # Check if the RDS instance already exists
     try:
         response = rds_client.describe_db_instances(DBInstanceIdentifier=db_instance_identifier)
-        print(f"RDS instance {db_instance_identifier} already exists.")
+        logger.warning(f"RDS instance {db_instance_identifier} already exists.")
         return response['DBInstances'][0]
     
     except rds_client.exceptions.DBInstanceNotFoundFault:
-        print(f"Creating new RDS instance: {db_instance_identifier}")
+        logger.info(f"Creating new RDS instance: {db_instance_identifier}")
 
     except botocore.exceptions.ClientError as e:
+        logger.error(f"Error checking RDS instance: {str(e)}")
         raise botocore.exceptions.ClientError(f"Error checking RDS instance: {str(e)}")
     
     except Exception as e:
+        logger.error(f"Unexpected error checking RDS instance: {str(e)}")
         raise Exception(f"Unexpected error checking RDS instance: {str(e)}")
 
     try:
@@ -63,16 +76,28 @@ def create_rds_database(db_name: str, db_instance_identifier: str, db_username: 
         )
 
     except botocore.exceptions.ClientError as e:
+        logger.error(f"Error creating RDS instance: {str(e)}")
         raise botocore.exceptions.ClientError(f"Error creating RDS instance: {str(e)}")
     
     except Exception as e:
-        raise Exception(f"Error creating RDS instance: {str(e)}")
+        logger.error(f"Unexpected error creating RDS instance: {str(e)}")
+        raise Exception(f"Unexpected error creating RDS instance: {str(e)}")
 
-    # Wait for the DB instance to be available
     waiter = rds_client.get_waiter('db_instance_available')
+    logger.info(f"Waiting for RDS instance {db_instance_identifier} to become available...")
     waiter.wait(DBInstanceIdentifier=db_instance_identifier)
+    logger.info(f"RDS instance {db_instance_identifier} is now available.")
 
-    url = f"postgresql+psycopg2://{db_username}:{db_password}@{response['DBInstance']['Endpoint']['Address']}:{response['DBInstance']['Endpoint']['Port']}/{db_name}"
+    try:
+        db_instance = rds_client.describe_db_instances(
+            DBInstanceIdentifier=db_instance_identifier
+        )['DBInstances'][0]
+
+    except botocore.exceptions.ClientError as e:
+        logger.error(f"Error retrieving RDS instance details: {str(e)}")
+        raise botocore.exceptions.ClientError(f"Error retrieving RDS instance details: {str(e)}. You may need to set the DATABASE_URL manually.")
+
+    url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_instance['Endpoint']['Address']}:{db_instance['Endpoint']['Port']}/{db_name}"
     return url
 
 
@@ -125,26 +150,36 @@ if __name__ == "__main__":
 
     if not AWS_ACCESS_KEY or not AWS_SECRET_ACCESS_KEY or not AWS_REGION_NAME:
         raise ValueError("AWS credentials or region not set in environment variables.")
+    else:
+        logger.info("AWS credentials and region are set. Proceeding to create RDS database.")
+
+    if not db_name or not db_instance_identifier or not db_username or not db_password:
+        logger.warning("Database name, instance identifier, username, or password not set in environment variables. Using defaults.")
 
     try:
         db_url = create_rds_database(db_name, db_instance_identifier, db_username, db_password)
-        print(f"Database created successfully: {db_url}")
+        logger.info(f"Database created successfully: {db_url}")
 
         # Write or update DATABASE_URL in .env
-        env_path = ".env"
-        lines = []
-        found = False
-        if os.path.exists(env_path):
-            with open(env_path, "r") as f:
-                for line in f:
-                    if line.startswith("DATABASE_URL="):
-                        lines.append(f"DATABASE_URL={db_url}\n")
-                        found = True
-                    else:
-                        lines.append(line)
-        if not found:
-            lines.append(f"DATABASE_URL={db_url}\n")
-        with open(env_path, "w") as f:
-            f.writelines(lines)
+        try:
+            env_path = ".env"
+            lines = []
+            found = False
+            if os.path.exists(env_path):
+                with open(env_path, "r") as f:
+                    for line in f:
+                        if line.startswith("DATABASE_URL="):
+                            lines.append(f"\nDATABASE_URL={db_url}\n")
+                            found = True
+                        else:
+                            lines.append(line)
+
+            if not found:
+                lines.append(f"\nDATABASE_URL={db_url}\n")
+            with open(env_path, "w") as f:
+                f.writelines(lines)
+        except Exception as e:
+            logger.warning(f"Error writing DATABASE_URL to .env file: {str(e)}. You may need to set it manually.")
+
     except Exception as e:
-        print(f"Error creating database: {e}")
+        logger.error(f"Error creating database: {str(e)}")

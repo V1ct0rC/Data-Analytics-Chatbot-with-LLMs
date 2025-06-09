@@ -15,7 +15,18 @@ from backend.app.llm.agent_functions import (
 from backend.app.llm.prompt_templates import GROQ_PROMPT_TEMPLATE
 
 from backend.app.db.models import ChatMessage
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 class GroqProvider(LLMProvider):
     """Groq provider implementation"""
@@ -61,10 +72,10 @@ class GroqProvider(LLMProvider):
             "list_tables": list_tables
         }
     
-    def generate_response(self, prompt: str, messages: List[ChatMessage], model: str = "llama3-8b-8192",
+    def generate_response(self, prompt: str, messages: List[ChatMessage], model: str = "llama-3.3-70b-versatile",
                           temperature: float = 0.2, top_p: float = 0.95, top_k: int = 30) -> Dict[str, Any]:
         """Generate a response using Groq API"""
-        print(f"Generating response with model: {model}, temperature: {temperature}, top_p: {top_p}, top_k: {top_k}")
+        logger.info(f"Generating response with model: {model}, temperature: {temperature}, top_p: {top_p}, top_k: {top_k}")
 
         # Format messages for Groq API
         formatted_messages = []
@@ -153,19 +164,17 @@ class GroqProvider(LLMProvider):
             
             return {
                 "response": response_text,
-                "chart_data": chart_data,
-                "model_used": model
+                "chart_data": chart_data
             }
             
         except Exception as e:
-            error_msg = str(e)
-            print(f"Error with Groq model {model}: {error_msg}")
+            logger.error(f"Error generating response with Groq: {str(e)}")
+            logger()
             
+            # TODO: Handle specific exceptions if needed. Stop sending the error to the frontend.
             return {
-                "response": "I'm sorry, I encountered an error generating a response. Please try again later or try with different parameters.",
+                "response": f"Error with Groq model {model}: {str(e)}",
                 "chart_data": None,
-                "error": "generation_error",
-                "error_details": error_msg
             }
     
     def get_available_models(self) -> List[str]:

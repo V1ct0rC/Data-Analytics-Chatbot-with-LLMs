@@ -11,7 +11,18 @@ from backend.app.llm.agent_functions import query_database, generate_chart, list
 from backend.app.llm.prompt_templates import GEMINI_PROMPT_TEMPLATE
 
 from backend.app.db.models import ChatMessage
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 class GeminiProvider(LLMProvider):
     """Google Gemini provider implementation"""
@@ -26,7 +37,7 @@ class GeminiProvider(LLMProvider):
                           temperature: float = 0.2, top_p: float = 0.95, top_k: int = 30) -> Dict[str, Any]:
         """Generate a response using Google Gemini"""
         
-        print(f"Generating response with model: {model}, temperature: {temperature}, top_p: {top_p}, top_k: {top_k}")
+        logger.info(f"Generating response with model: {model}, temperature: {temperature}, top_p: {top_p}, top_k: {top_k}")
         config = types.GenerateContentConfig(
             system_instruction=GEMINI_PROMPT_TEMPLATE,
             tools=[query_database, generate_chart, list_tables],
@@ -52,6 +63,7 @@ class GeminiProvider(LLMProvider):
             )
         except Exception as e:
             # TODO: Handle specific exceptions if needed. Stop sending the error to the frontend.
+            logger.error(f"Error generating response: {str(e)}")
             return {"response": f"Error generating response: {str(e)}", "chart_data": None}
         
         response_text = str(response.text)

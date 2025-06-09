@@ -1,10 +1,24 @@
+"""
+File for database operations. So far, it only contains a function to add a CSV file as a new table in the database.
+"""
 import pandas as pd
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from io import StringIO
 from dotenv import load_dotenv
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
@@ -26,7 +40,11 @@ def add_csv_to_database(table_name, file_bytes):
         try:
             df = pd.read_csv(StringIO(file_bytes.decode("utf-8")))
         except UnicodeDecodeError:
+            logger.warning("UTF-8 decoding failed, trying latin1 encoding.")
             df = pd.read_csv(StringIO(file_bytes.decode("latin1")))
+        except Exception as e:
+            logger.error(f"Error reading CSV file: {str(e)}")
+            return {"success": False, "message": f"Error reading CSV file: {str(e)}"}
 
         # Turning the Pandas DataFrame into a SQL table. 
         # If a table with the same name exists, it will be replaced.
@@ -39,7 +57,7 @@ def add_csv_to_database(table_name, file_bytes):
             method="multi",
             chunksize=200
         )
-        print(f"Added {len(df)} records to {table_name}")
+        logger.info(f"Added {len(df)} records to {table_name}")
 
         return {"success": True, "message": f"Table '{table_name}' created successfully."}
     
@@ -49,6 +67,8 @@ def add_csv_to_database(table_name, file_bytes):
     except Exception as e:
         return {"success": False, "message": str(e)}
 
+
+# TODO: Add more database functions such as updating, or deleting records.
 
 if __name__ == "__main__":
     pass

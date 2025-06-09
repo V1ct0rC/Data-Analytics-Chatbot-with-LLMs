@@ -19,9 +19,17 @@ from backend.app.db.models import (
 from backend.app.db.db_functions import add_csv_to_database
 
 
-load_dotenv()
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
+
+load_dotenv()
 
 app = FastAPI(debug=True, title="Data Science LLM Backend", description="A backend service for interacting with SQL data and LLMs.")
 
@@ -34,7 +42,7 @@ def read_root():
 def create_session(request: ChatSessionRequest):
     """Create a new chat session"""
     new_session = session_manager.create_session(request.name)
-    print(f"Created new session: {new_session.id}")
+    logger.info(f"Created new session: {new_session.id}")
     return new_session
 
 @app.get("/sessions/{session_id}", response_model=ChatSession)
@@ -140,7 +148,7 @@ async def upload_csv(table_name: str = Form(...), file: UploadFile = File(...)):
             return {"success": True, "message": f"Table '{table_name}' created successfully."}
         else:
             return {"success": False, "message": result.get("message", "Unknown error.")}
-        
+    
     except Exception as e:
         logger.error(f"Error uploading CSV: {e}")
         return {"success": False, "message": str(e)}

@@ -2,7 +2,18 @@ import subprocess
 import os
 import signal
 import sys
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def run_backend():
     # Run uvicorn from root dir, using full module path
@@ -30,10 +41,10 @@ def run_set_default_table():
 
 if __name__ == "__main__":
     if "--create" in sys.argv:
-        print("Creating database...")
+        logger.info("Running database creation script...")
         run_create_database()
     else:
-        print("Setting default table...")
+        logger.info("Running table setup...")
         run_set_default_table()
         backend_proc = run_backend()
         frontend_proc = run_frontend()

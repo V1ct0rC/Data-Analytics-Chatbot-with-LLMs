@@ -57,3 +57,4 @@ This implementation uses basic scripts and is far from production-ready. Conside
 - Use a more robust infrastructure as code tool like Terraform or AWS CDK for better management and scalability.
 - The RDS instance is configured as publicly accessible but should be restricted in production environments.
 - Consider implementing additional security measures like VPC configuration for production deployments.
+- Thise whole process of setting the DATABASE_URL was easy to implement but is far from ideal. It was just made for the sake of simplicity. A better approach would be to use a more robust configuration management system.

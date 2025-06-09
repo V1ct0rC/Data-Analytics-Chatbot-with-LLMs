@@ -14,12 +14,19 @@ import logging
 from dotenv import load_dotenv
 
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_operations.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
 engine = create_engine(DATABASE_URL)
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
 
 # Session related functions --------------------------------------------------------------------------
 def create_session(name: Optional[str] = None) -> Optional[ChatSession]:
@@ -99,7 +106,7 @@ def list_sessions() -> List[ChatSession]:
                 text("SELECT id, name, created_at FROM chat_sessions")
             ).fetchall()
 
-            print(f"Found {len(result)} sessions in the database.")
+            logger.info(f"Found {len(result)} sessions in the database.")
             sessions = []
             for row in result:
                 messages = get_messages(row[0])

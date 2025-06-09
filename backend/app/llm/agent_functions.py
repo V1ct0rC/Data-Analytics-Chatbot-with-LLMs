@@ -5,14 +5,24 @@ to be used by an LLM agent. and work with a PostgreSQL or SQLite database.
 In this module, all errors are returned to the agent as a dictionary with an "error" key.
 This approach allows the agent to attempt to handle errors and provide feedback to the user.
 """
-
 import json
 import os
 from dotenv import load_dotenv
 
 from sqlalchemy import create_engine, text, exc
 from decimal import Decimal
+import logging
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("logs/database_queries.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
@@ -50,8 +60,10 @@ def query_database(sql_query: str) -> list:
         A list of dictionaries representing [columns, rows] from the query result, or a dictionary with an error message if the query fails.
     """
     if not sql_query or not isinstance(sql_query, str):
-        return [{"error": "No SQL query provided."}]
-    print(f"Executing SQL query: {sql_query}")
+        logger.warning("No SQL query provided.")
+        return [{"warning": "No SQL query provided."}]
+    
+    logger.info(f"Executing SQL query: {sql_query}")
     
     try:
         engine = create_engine(DATABASE_URL)
@@ -74,19 +86,25 @@ def query_database(sql_query: str) -> list:
                             row_dict[key] = float(value)
                     result_dicts.append(row_dict)
                 return result_dicts
+               
+        except exc.OperationalError as e:
+            logger.error(f"Database operational query error: {e}")
+            return [{"error": f"Database operational query error: {str(e)}"}]
             
         except exc.SQLAlchemyError as e:
-            print(f"Database query error: {e}")
-            return [{"error": str(e)}]
+            logger.error(f"Database query error: {e}")
+            return [{"error": f"Database query error: {str(e)}"}]
+        
         except Exception as e:
-            print(f"Unexpected error: {e}")
-            return [{"error": str(e)}]
+            logger.error(f"Unexpected database query error: {e}")
+            return [{"error": f"Unexpected database query error: {str(e)}"}]
     
     except exc.SQLAlchemyError as e:
-        print(f"Database connection error: {e}")
+        logger.error(f"Database connection error: {e}")
         return [{"error": f"Database connection error: {str(e)}"}]
+    
     except Exception as e:
-        print(f"Unexpected error during DB connection: {e}")
+        logger.error(f"Unexpected error during DB connection: {e}")
         return [{"error": f"Unexpected error during DB connection: {str(e)}"}]
 
 
@@ -115,7 +133,7 @@ generate_chart_declaration = {
             },
             "y_column": {
                 "type": "string",
-                "description": "The columns names for the y-axis. You can set more than one column, format the list as a string '['col_1', ...]'. Make sure that this column exists in the query result. If needed make the query forehand to ensure the columns are present."
+                "description": "The columns names for the y-axis. To set one column, send just the string like 'col_1'. You can set more than one column if format the list as a string like '['col_1', ...]'. Make sure that this column exists in the query result. If needed make the query forehand to ensure the columns are present."
             }
         },
         "required": ["chart_type", "sql_query", "title", "x_column", "y_column"]
@@ -131,7 +149,7 @@ def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y
         sql_query: The SQL query to execute against the database.
         title: The title of the chart.
         x_column: The column name for the x-axis. Make sure it is a valid column in the query result.
-        y_column: The columns names for the y-axis. You can set more than one column, format the list as a string '["col_1", ...]'. Make sure that this column exists in the query result. If needed make the query forehand to ensure the columns are present.
+        y_column: The columns names for the y-axis. To set one column, send just the string like 'col_1'. You can set more than one column if format the list as a string like '["col_1", ...]'. Make sure that this column exists in the query result. If needed make the query forehand to ensure the columns are present.
     
     Returns:
         A dictionary containing the chart type, title, x_column, y_column, and data for the chart.
@@ -151,8 +169,10 @@ def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y
             "y_column": y_column,
             "data": data
         }
+    
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        logger.error(f"Error generating chart: {e}")
+        return {"success": False, "Error generating chart:": str(e)}
 
 
 list_tables_declaration = {
@@ -188,14 +208,18 @@ def list_tables() -> list:
                 return ["Unsupported database type"]
             tables = [row[0] for row in result.fetchall()]
             return tables
+    
+    except exc.SQLAlchemyError as e:
+        logger.error(f"Error listing tables: {e}")
+        return ["Error listing tables: {str(e)}"]
+
     except Exception as e:
-        print(f"Error listing tables: {e}")
-        return []
+        logger.error(f"Unknown error listing tables: {e}")
+        return ["Unknown error listing tables: {str(e)}"]
 
 
 if __name__ == "__main__":
-    # Example usage
-    sql_query = "SELECT * FROM clientes LIMIT 5"
+    sql_query = "SELECT count(sexo) FROM clientes LIMIT 5"
     results = query_database(sql_query)
     
     if results is not None:
