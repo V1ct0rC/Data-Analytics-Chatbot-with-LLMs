@@ -155,6 +155,7 @@ def generate_chart(chart_type: str, sql_query: str, title: str, x_column: str, y
         A dictionary containing the chart type, title, x_column, y_column, and data for the chart.
         If an error occurs, it returns a dictionary with success set to False and an error message.
     """
+    logger.info(f"Generating chart with type: {chart_type}, title: {title}, x_column: {x_column}, y_column: {y_column}")
     try:
         # Get data from database using the provided SQL query. Errors will be returned to the agent.
         data = query_database(sql_query)
@@ -192,6 +193,7 @@ def list_tables() -> list:
     Returns:
         A list of table names.
     """
+    logger.info("Listing all tables in the database.")
     engine = create_engine(DATABASE_URL)
     try:
         # Connect to the database and retrieve the list of tables. Errors will be returned to the agent.

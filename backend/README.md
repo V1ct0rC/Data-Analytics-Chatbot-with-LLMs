@@ -50,6 +50,16 @@ GROQ_API_KEY=your_groq_api_key
 DATABASE_URL=your_database_url (or local SQLite file path)
 ```
 
+"llama-3.3-70b-versatile", "qwen-qwq-32b", "deepseek-r1-distill-llama-70b"
+
+The models supported by the code so far are:
+- Google Gemini: `gemini-2.0-flash` (The default model and the one I most tested)
+- Google Gemini: `gemini-1.5-flash` (Does not seem to deal with function calling very well)
+- Google Gemini: `gemini-1.5-pro` (May not be available for all users, depends on your API free tier usage)
+- Groq: `llama-3.3-70b-versatile` (Was also tested, but not as extensively as Gemini. Works well with function calling)
+- Groq: `qwen-qwq-32b` (Also works well with function calling, has thinking capabilities)
+- Groq: `deepseek-r1-distill-llama-70b` (Works well and also has thinking capabilities)
+
 The backend can be run independently with the command below. However, it's always recommended to use the project's main entry point.
 
 ```bash

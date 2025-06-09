@@ -30,7 +30,7 @@ class GeminiProvider(LLMProvider):
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
         self.available_models = [
-            "gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash",
+            "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro",
         ]
 
     def generate_response(self, prompt: str, messages: List[ChatMessage], model: str = "gemini-2.0-flash",
