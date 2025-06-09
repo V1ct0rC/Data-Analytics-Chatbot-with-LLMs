@@ -1,6 +1,8 @@
 # Data-Analytics-Chatbot-with-LLMs
 This repository contains implementations for a data analytics chatbot with LLMs. The chatbot is able to interpret queries made in natural language to a dataset, translate them into appropriate operations on a cloud-based database, and return meaningful insights from a given dataset.
 
+> You may notice that some commits were made after I turned in the assignment (07/06/2025). However, since the submission deadline was 09/06/2025 (23:59), I took the liberty of continuing to improve the project.
+
 ![Landing Page](frontend/assets/landing_page_print.png)
 
 ![Chat Session](frontend/assets/chat_session_print.png)
@@ -56,10 +58,10 @@ The main LLM provider used in this project is [Google Gemini](https://ai.google.
 
 Along with the main LLM provider, I also implemented a factory pattern to allow for easy integration of other LLM providers in the future. This way, the chatbot can be easily extended to support multiple LLM providers without changing the core logic of the application. As an example, I added another provider, [Groq](https://groq.com/), by just creating a new file in the `llm/providers/`.
 
-> For more details about each part of the project, please refer to the respective directories: `frontend/`, `backend/`, and `cloud/`. They all contain their own README files with more information about the implementation, design choices, and improvements that can be made.
+> For more details about each part of the project, please refer to the respective directories: `frontend/`, `backend/`, and `cloud/`. They all contain their own README files with more information about the implementation, design choices, and improvements that can be made. I **STRONGLY RECOMMENDED** reading the `backend/README.md` file, as it contains a detailed explanation of the main LLM decisions functionalities.
 
 ## Installation and Setup
-To run the application locally, you only need to create a `.env` file in the root directory or export the following environment variables in your terminal and create a virtual environment with the required dependencies:
+To run the application, you only need to create a virtual environment with the required dependencies:
 
 ```bash
 python -m venv .venv
@@ -67,9 +69,11 @@ source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-For your env file, you need to add the following environment variables:
+You also need to create a `.env` file in the root directory of the project. This file will contain the environment variables needed for the application to run properly. The current state of the code supports two main LLM providers: Google Gemini and Groq. You can choose to use one or both of them by setting the respective environment variables in the `.env` file.
+
 ```plaintext
 GEMINI_API_KEY=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
 ```
 
 Incase you already have a cloud database instantiated (the code was only tested in PostgreSQL), you can add the following environment variable directply to the `.env` file:
@@ -98,12 +102,13 @@ python run.py --create
 ```
 A new AWS RDS database will be created, and the `DATABASE_URL` will be automatically updated in the `.env` file.
 
-Without a cloud database or AWS credencials, the code will automatically use a local SQLite database.
+Without a cloud database or AWS credencials, the code will automatically use a local SQLite database. With all set, you can run the application via:
 
-With all set, you can run the application via:
 ```bash
 python run.py
 ```
+
+You will be able to open your browser and access the application at `http://localhost:8501`.
 
 ## Comments and Thoughts
 Biggest difficulties:
@@ -125,5 +130,3 @@ Future improvements:
 - Using a prper cloud infrastructure as code tool like Terraform or AWS CDK to manage the cloud resources.
 - Display in a better way the thinking process of the models that support it, especially Deepseek R1, that usually thinks a lot before answering.
 - I could have kept the same reurn pattern for the endpoint responses, but I ended implemented them at different times, so they are not consistent across the application. Of course, this does nit affect the functionality.
-
-> You may notice that some commits were made after I turned in the assignment (07/06/2025). However, since the submission deadline was 09/06/2025, I took the liberty of continuing to improve the project.

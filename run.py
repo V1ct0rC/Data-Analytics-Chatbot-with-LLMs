@@ -5,6 +5,9 @@ import sys
 import logging
 
 
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -22,9 +25,9 @@ def run_backend():
     )
 
 def run_frontend():
-    # Run streamlit from root dir, using relative path
+    # Run streamlit from root dir in headless mode
     return subprocess.Popen(
-        ["streamlit", "run", ".\\frontend\\app.py"]
+        ["streamlit", "run", ".\\frontend\\app.py", "--server.headless", "true"]
     )
 
 def run_create_database():
