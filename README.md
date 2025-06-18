@@ -1,19 +1,11 @@
 # Data-Analytics-Chatbot-with-LLMs
 This repository contains implementations for a data analytics chatbot with LLMs. The chatbot is able to interpret queries made in natural language to a dataset, translate them into appropriate operations on a cloud-based database, and return meaningful insights from a given dataset.
 
-> You may notice that some commits were made after I turned in the assignment (07/06/2025). However, since the submission deadline was 09/06/2025 (23:59), I took the liberty of continuing to improve the project.
-
 ![Landing Page](frontend/assets/landing_page_print.png)
 
 ![Chat Session](frontend/assets/chat_session_print.png)
 
 ![Chat Providers](frontend/assets/chat_providers_print.png)
-
-Here is a video demo of the application in action, it shows a brief overview of the features and functionalities of the chatbot and explains the repository structure [PT-BR]:
-
-[Watch the demo video on Google Drive](https://drive.google.com/file/d/1sVwMaYjG0K-erpBoN5SanHFnXuBb3nQg/view?usp=sharing)
-
-> This video is currently outdated, as it was recorded before the latest major changes were made to the repository (multi LLM Provider support, factory pattern for easy escalation, better handling on cloud routines). However, it still provides a good overview of the project and its functionalities. I plan to update the video in the future to reflect the latest changes and improvements made to the project.
 
 ## Architecture Overview
 This repo is divided into three main parts: the frontend, the backend and the cloud. The frontend is responsible for the user interface, while the backend handles the logic of processing user queries, interacting with the database, and generating responses. The cloud part is responsible for creatng the infrascructure and hosting the database and making it accessible to the backend.
