@@ -11,6 +11,7 @@ from typing import List
 
 from backend.app.llm.factory import LLMProviderFactory
 import backend.app.llm.session as session_manager
+from backend.app.llm.guardrails import validate_user_prompt, moderate_response, validate_table_access
 
 from backend.app.db.models import (
     ChatSession, ChatMessage, ChatSessionRequest, 
@@ -82,6 +83,11 @@ def get_messages(session_id: str):
 def generate_response(request: GenerateRequest):
     """Generate a response using the specified LLM provider"""
 
+    is_safe = validate_user_prompt(request.prompt)
+    if not is_safe:
+        logger.warning(f"Blocked unsafe prompt: {request.prompt}")
+        raise HTTPException(status_code=400, detail="Unsafe prompt detected. Please rephrase your request.")
+
     # Get LLM provider from the factory -------------------------------------------------------------
     provider = LLMProviderFactory.get_provider(request.provider)
     if not provider:
@@ -115,8 +121,10 @@ def generate_response(request: GenerateRequest):
         # Store assistant's response
         session_manager.add_message(session_id, "assistant", result["response"])
 
+        moderated_response = moderate_response(result["response"])
+
         return {
-            "response": result["response"],
+            "response": moderated_response,
             "session_id": session_id,
             "chart_data": result.get("chart_data", None)
         }
