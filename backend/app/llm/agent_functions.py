@@ -63,6 +63,12 @@ def query_database(sql_query: str) -> list:
         logger.warning("No SQL query provided.")
         return [{"warning": "No SQL query provided."}]
     
+    dangerous_keywords = ["DROP", "DELETE", "TRUNCATE", "ALTER", "GRANT", "REVOKE"]
+    for keyword in dangerous_keywords:
+        if keyword in sql_query.upper():
+            logger.warning(f"Potentially dangerous SQL query blocked: {sql_query}")
+            return [{"warning": "This query contains potentially harmful operations and has been blocked for security reasons."}]
+    
     logger.info(f"Executing SQL query: {sql_query}")
     
     try:
